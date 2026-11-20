@@ -30,7 +30,9 @@ if (!fs.existsSync(defaultSongsDir)) {
 
 // Auto-discover and watch MP3 and M4A files from user's computer
 try {
-  autoDiscoverAndSync(defaultSongsDir);
+  scanDirectory(defaultSongsDir).then(() => {
+    console.log(`🎵 Pre-cached ${trackPathMap.size} tracks from ${defaultSongsDir}`);
+  }).catch(() => {});
   setupAutoWatchers(defaultSongsDir);
 } catch (err) {
   console.warn("Auto-discovery startup notice:", err.message);
@@ -47,8 +49,14 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Static serve uploaded files
+// Static serve uploaded files and local songs with full CORS
 app.use('/uploads', express.static(uploadsDir));
+app.use('/songs', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Range, Authorization');
+  next();
+}, express.static(defaultSongsDir));
 
 // Multer storage for saving audio files to d:\Music\songs
 const songsStorage = multer.diskStorage({
@@ -417,14 +425,19 @@ app.post('/api/settings/folder', optionalAuth, async (req, res) => {
 });
 
 // GET /api/stream/local - Stream audio file directly from local storage with Range support
-app.get('/api/stream/local', (req, res) => {
+// GET /api/stream/local - Stream audio file directly from local storage with Range support & self-healing fallbacks
+app.get('/api/stream/local', async (req, res) => {
   const trackId = req.query.id;
   const relFile = req.query.file;
+  const title = req.query.title;
 
   let fullPath = null;
   if (trackId && trackPathMap.has(trackId)) {
     fullPath = trackPathMap.get(trackId);
-  } else if (relFile) {
+  }
+
+  // Fallback 1: check relFile if specified
+  if ((!fullPath || !fs.existsSync(fullPath)) && relFile) {
     const data = loadData();
     const targetDir = data.customSongsDir && fs.existsSync(data.customSongsDir) 
       ? data.customSongsDir 
@@ -435,6 +448,38 @@ app.get('/api/stream/local', (req, res) => {
     if (fs.existsSync(cand1)) fullPath = cand1;
     else if (fs.existsSync(cand2)) fullPath = cand2;
     else if (fs.existsSync(relFile)) fullPath = relFile;
+  }
+
+  // Fallback 2: if trackPathMap was empty on startup, quick scan defaultSongsDir
+  if ((!fullPath || !fs.existsSync(fullPath)) && trackPathMap.size === 0) {
+    try {
+      await scanDirectory(defaultSongsDir);
+      if (trackId && trackPathMap.has(trackId)) {
+        fullPath = trackPathMap.get(trackId);
+      }
+    } catch (e) {}
+  }
+
+  // Fallback 3: search songs folder for any file loosely matching trackId, relFile or title
+  if (!fullPath || !fs.existsSync(fullPath)) {
+    const rawTarget = (relFile || trackId || title || '');
+    const cleanTarget = rawTarget.toLowerCase().replace(/^local-/, '').replace(/[-_.]/g, ' ').trim();
+    if (cleanTarget && fs.existsSync(defaultSongsDir)) {
+      try {
+        const files = fs.readdirSync(defaultSongsDir);
+        for (const f of files) {
+          const ext = path.extname(f).toLowerCase();
+          if (SUPPORTED_EXTS.includes(ext)) {
+            const cleanF = f.toLowerCase().replace(ext, '').replace(/[-_.]/g, ' ').trim();
+            if (cleanF === cleanTarget || cleanTarget.includes(cleanF) || cleanF.includes(cleanTarget)) {
+              fullPath = path.resolve(defaultSongsDir, f);
+              if (trackId) trackPathMap.set(trackId, fullPath);
+              break;
+            }
+          }
+        }
+      } catch (e) {}
+    }
   }
 
   if (!fullPath || !fs.existsSync(fullPath)) {
@@ -730,6 +775,20 @@ app.delete('/api/playlists/:id/remove/:trackId', authenticate, (req, res) => {
 
   res.json({ success: true, playlist: updatedPlaylist });
 });
+
+// ---------------------------------------------------------------------------
+// PRODUCTION CLIENT SERVING (Serves built React Vite frontend)
+// ---------------------------------------------------------------------------
+const clientDistDir = path.resolve(__dirname, '..', '..', 'client', 'dist');
+if (fs.existsSync(clientDistDir)) {
+  app.use(express.static(clientDistDir));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/songs')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistDir, 'index.html'));
+  });
+}
 
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {

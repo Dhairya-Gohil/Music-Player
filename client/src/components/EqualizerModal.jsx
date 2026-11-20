@@ -3,11 +3,11 @@ import { X, Sliders, RotateCcw, Check } from 'lucide-react';
 
 export const EQ_PRESETS = {
   Original: [0, 0, 0, 0, 0],
-  'Bass Boost': [7, 5, 1, 0, 0],
-  'Vocal Clarity': [-1, 1, 5, 4, 2],
-  'Electronic / EDM': [6, 4, -1, 3, 5],
-  Rock: [4, 2, -1, 3, 4],
-  Acoustic: [2, 3, 1, 2, 3]
+  'Bass Boost': [8, 6, 1, 0, -1],
+  'Vocal Clarity': [-3, 0, 6, 5, 3],
+  'Electronic / EDM': [7, 5, -2, 4, 6],
+  Rock: [5, 3, -1, 4, 5],
+  Acoustic: [3, 3, 2, 4, 4]
 };
 
 export const FREQ_LABELS = ['60Hz', '250Hz', '1kHz', '4kHz', '12kHz'];

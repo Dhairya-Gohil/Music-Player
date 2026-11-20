@@ -43,28 +43,15 @@ function parseFilenameFallback(filename) {
 function getStandardAudioDirs(targetSongsDir) {
   const home = os.homedir();
   const userProfile = process.env.USERPROFILE || home;
-  const oneDrive = process.env.OneDrive || path.join(home, 'OneDrive');
 
-  const candidates = [
-    path.join(home, 'Downloads'),
-    path.join(userProfile, 'Downloads'),
-    path.join(home, 'Music'),
-    path.join(userProfile, 'Music'),
-    path.join(oneDrive, 'Music'),
-    path.join(oneDrive, 'Downloads'),
-    path.join(oneDrive, 'Desktop'),
-    path.join(home, 'Desktop'),
-    path.join(userProfile, 'Desktop')
-  ];
-
+  const candidates = [];
   if (targetSongsDir) {
-    const parentDir = path.dirname(targetSongsDir);
-    const driveRoot = path.parse(path.resolve(targetSongsDir)).root;
-    candidates.push(parentDir);
-    candidates.push(driveRoot);
-    candidates.push(path.join(driveRoot, 'Downloads'));
-    candidates.push(path.join(driveRoot, 'Music'));
+    candidates.push(path.normalize(targetSongsDir));
   }
+  candidates.push(path.join(userProfile, 'Music'));
+  candidates.push(path.join(home, 'Music'));
+  candidates.push(path.join(userProfile, 'Downloads'));
+  candidates.push(path.join(home, 'Downloads'));
 
   const uniqueDirs = Array.from(new Set(candidates.map(d => d ? path.normalize(d) : '')));
   return uniqueDirs.filter(dir => {
@@ -88,7 +75,7 @@ async function getFileTrackData(fullPath, mmModule) {
     let metadata = null;
     if (mmModule) {
       try {
-        metadata = await mmModule.parseFile(fullPath, { duration: true, skipCovers: false });
+        metadata = await mmModule.parseFile(fullPath, { duration: true, skipCovers: true });
       } catch (metaErr) {
         // Tag parse fail fallback
       }
@@ -143,8 +130,9 @@ async function scanDirectory(dirPath, maxDepth = 2) {
   if (!dirPath || !fs.existsSync(dirPath)) return results;
 
   const mmModule = await getMusicMetadata();
+  const fileEntries = [];
 
-  async function walk(currentDir, depth) {
+  function collectFiles(currentDir, depth) {
     if (depth > maxDepth) return;
     let entries = [];
     try {
@@ -161,39 +149,60 @@ async function scanDirectory(dirPath, maxDepth = 2) {
             name !== 'node_modules' && name !== 'AppData' &&
             name !== 'dist' && name !== 'build' &&
             name !== 'System Volume Information') {
-          await walk(fullPath, depth + 1);
+          collectFiles(fullPath, depth + 1);
         }
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name).toLowerCase();
         if (SUPPORTED_EXTS.includes(ext)) {
-          const trackData = await getFileTrackData(fullPath, mmModule);
-          if (trackData) {
-            const trackId = `local-${crypto.createHash('md5').update(fullPath.toLowerCase()).digest('hex')}`;
-            trackPathMap.set(trackId, fullPath);
-
-            results.push({
-              id: trackId,
-              title: trackData.title,
-              artist: trackData.artist,
-              album: trackData.album,
-              duration: trackData.duration,
-              genre: trackData.genre,
-              coverUrl: trackData.coverUrl,
-              useDefaultIcon: !trackData.coverUrl,
-              audioUrl: `/api/stream/local?id=${encodeURIComponent(trackId)}`,
-              relPath: path.basename(fullPath),
-              fullPath,
-              fileSize: trackData.fileSize,
-              isLocalFile: true
-            });
-          }
+          fileEntries.push(fullPath);
         }
       }
     }
   }
 
-  await walk(dirPath, 1);
-  return results;
+  collectFiles(dirPath, 1);
+
+  // Instant pass: Register all discovered files into trackPathMap immediately (< 0.5ms)
+  for (const fullPath of fileEntries) {
+    const trackId = `local-${crypto.createHash('md5').update(fullPath.toLowerCase()).digest('hex')}`;
+    const baseName = path.basename(fullPath);
+    const nameWithoutExt = path.parse(baseName).name;
+    const slugName = `local-${nameWithoutExt.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
+    trackPathMap.set(trackId, fullPath);
+    trackPathMap.set(baseName.toLowerCase(), fullPath);
+    trackPathMap.set(nameWithoutExt.toLowerCase(), fullPath);
+    trackPathMap.set(slugName, fullPath);
+  }
+
+  // Parallel metadata resolution
+  const parsedTracks = await Promise.all(
+    fileEntries.map(async (fullPath) => {
+      const trackData = await getFileTrackData(fullPath, mmModule);
+      if (!trackData) return null;
+
+      const trackId = `local-${crypto.createHash('md5').update(fullPath.toLowerCase()).digest('hex')}`;
+      const fileName = path.basename(fullPath);
+
+      return {
+        id: trackId,
+        title: trackData.title,
+        artist: trackData.artist,
+        album: trackData.album,
+        duration: trackData.duration,
+        genre: trackData.genre,
+        coverUrl: trackData.coverUrl,
+        useDefaultIcon: !trackData.coverUrl,
+        audioUrl: `/api/stream/local?id=${encodeURIComponent(trackId)}&file=${encodeURIComponent(fileName)}`,
+        relPath: fileName,
+        fullPath,
+        fileSize: trackData.fileSize,
+        isLocalFile: true
+      };
+    })
+  );
+
+  return parsedTracks.filter(Boolean);
 }
 
 // Scan all available music locations in-place (ZERO STORAGE OVERHEAD)

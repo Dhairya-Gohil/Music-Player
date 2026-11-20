@@ -234,8 +234,13 @@ export default function App() {
         saveTracksToIndexedDB(mergedTracks);
         setIsLocalStorageSource(true);
         if (tracksData.folder) setCurrentFolder(tracksData.folder);
+        // Refresh currentTrack with merged/server data if currently matching
+        setCurrentTrack(prev => {
+          if (!prev) return mergedTracks[0] || null;
+          const found = mergedTracks.find(t => t.id === prev.id || (t.title && prev.title && t.title.toLowerCase() === prev.title.toLowerCase()));
+          return found || prev;
+        });
         if (!currentTrack && mergedTracks.length > 0) {
-          setCurrentTrack(mergedTracks[0]);
           setQueue(mergedTracks.slice(1));
         }
       }
@@ -485,18 +490,25 @@ export default function App() {
       }
 
       if (!filtersRef.current || filtersRef.current.length === 0) {
-        const freqs = [60, 250, 1000, 4000, 12000];
-        const filters = freqs.map((freq, idx) => {
+        // Acoustically tuned 5-band studio curve:
+        // 1. 60Hz slider: lowshelf at 150Hz - boosts/cuts sub & punchy mid-bass audibly on all speakers/headphones
+        // 2. 250Hz slider: wide peaking (Q=0.707) at 250Hz - warm low-end body vs scooped clarity
+        // 3. 1kHz slider: peaking at 1000Hz (Q=1.0) - core vocal body & melodic midrange
+        // 4. 4kHz slider: peaking at 4000Hz (Q=1.0) - vocal presence, articulation & attack
+        // 5. 12kHz slider: highshelf at 7000Hz - rich treble sparkle, hi-hats, cymbals & studio air
+        const filterConfigs = [
+          { type: 'lowshelf', freq: 150 },
+          { type: 'peaking', freq: 250, Q: 0.707 },
+          { type: 'peaking', freq: 1000, Q: 1.0 },
+          { type: 'peaking', freq: 4000, Q: 1.0 },
+          { type: 'highshelf', freq: 7000 }
+        ];
+
+        const filters = filterConfigs.map((cfg, idx) => {
           const filter = ctx.createBiquadFilter();
-          if (idx === 0) {
-            filter.type = 'lowshelf';
-          } else if (idx === freqs.length - 1) {
-            filter.type = 'highshelf';
-          } else {
-            filter.type = 'peaking';
-            filter.Q.value = 1.0;
-          }
-          filter.frequency.value = freq;
+          filter.type = cfg.type;
+          filter.frequency.value = cfg.freq;
+          if (cfg.Q) filter.Q.value = cfg.Q;
           filter.gain.value = eqGains[idx] || 0;
           return filter;
         });
@@ -570,18 +582,34 @@ export default function App() {
     if (!track) return;
     initWebAudio();
     if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume();
+      audioCtxRef.current.resume().catch(() => {});
     }
+
+    const targetUrl = track.audioUrl || (track.relPath ? `/api/stream/local?id=${encodeURIComponent(track.id)}&file=${encodeURIComponent(track.relPath)}` : '');
 
     if (currentTrack?.id === track.id) {
       if (audioRef.current) {
+        // Ensure audio source is set if empty or about:blank
+        if (!audioRef.current.src || audioRef.current.src === '' || audioRef.current.src === window.location.href) {
+          if (targetUrl) audioRef.current.src = targetUrl;
+        }
         if (audioRef.current.paused || audioRef.current.ended) {
-          audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
+          audioRef.current.play().then(() => {
+            setIsPlaying(true);
+          }).catch((e) => {
             console.warn("Play error:", e.message);
+            if (track.relPath) {
+              const fallbackUrl = `/songs/${encodeURIComponent(track.relPath)}`;
+              if (!audioRef.current.src.includes(encodeURIComponent(track.relPath))) {
+                audioRef.current.src = fallbackUrl;
+                audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+                return;
+              }
+            }
+            setIsPlaying(false);
           });
         }
       }
-      setIsPlaying(true);
       return;
     }
 
@@ -599,7 +627,6 @@ export default function App() {
     }
 
     setCurrentTrack(track);
-    setIsPlaying(true);
 
     // 1. Android / Windows System Notification Shade & Lock-Screen MediaSession Controls
     if ('mediaSession' in navigator) {
@@ -616,8 +643,7 @@ export default function App() {
         });
 
         navigator.mediaSession.setActionHandler('play', () => {
-          audioRef.current?.play();
-          setIsPlaying(true);
+          audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
         });
         navigator.mediaSession.setActionHandler('pause', () => {
           audioRef.current?.pause();
@@ -648,7 +674,7 @@ export default function App() {
     if (audioRef.current) {
       // Keep audio.loop false so native onEnded fires cleanly without WebAudio loop boundary stalls
       audioRef.current.loop = false;
-      audioRef.current.src = track.audioUrl;
+      audioRef.current.src = targetUrl;
       audioRef.current.currentTime = 0;
       audioRef.current.volume = isMuted ? 0 : volume;
       audioRef.current.muted = isMuted;
@@ -657,6 +683,21 @@ export default function App() {
         if (synthTimerRef.current) clearInterval(synthTimerRef.current);
       }).catch((err) => {
         console.warn("Audio play notice:", err.message);
+        // Fallback to static direct file or relative path
+        if (track.relPath) {
+          const fallbackUrl = `/songs/${encodeURIComponent(track.relPath)}`;
+          console.log("Attempting direct audio fallback:", fallbackUrl);
+          audioRef.current.src = fallbackUrl;
+          audioRef.current.play().then(() => {
+            setIsPlaying(true);
+            if (synthTimerRef.current) clearInterval(synthTimerRef.current);
+          }).catch((fbErr) => {
+            console.warn("Fallback play also failed:", fbErr.message);
+            setIsPlaying(false);
+          });
+          return;
+        }
+        setIsPlaying(false);
       });
     }
   };
@@ -1566,6 +1607,22 @@ export default function App() {
       <audio 
         ref={audioRef}
         crossOrigin="anonymous"
+        onPlay={() => setIsPlaying(true)}
+        onPlaying={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onError={(e) => {
+          console.warn("Audio element error event:", e);
+          if (currentTrack?.relPath && audioRef.current) {
+            const fallbackUrl = `/songs/${encodeURIComponent(currentTrack.relPath)}`;
+            if (!audioRef.current.src.includes(encodeURIComponent(currentTrack.relPath))) {
+              console.log("Switching audio element to direct fallback:", fallbackUrl);
+              audioRef.current.src = fallbackUrl;
+              audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+              return;
+            }
+          }
+          setIsPlaying(false);
+        }}
         onTimeUpdate={() => {
           if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
         }}
