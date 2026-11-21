@@ -1,14 +1,14 @@
 import React from 'react';
-import { 
-  Music, 
-  Users, 
-  Disc, 
-  ListMusic, 
-  Heart, 
-  RotateCw, 
-  Plus, 
-  CheckSquare, 
-  Sliders, 
+import {
+  Music,
+  Users,
+  Disc,
+  ListMusic,
+  Heart,
+  RotateCw,
+  Plus,
+  CheckSquare,
+  Sliders,
   Upload,
   User,
   FolderOpen
@@ -54,7 +54,7 @@ export default function Sidebar({
       userSelect: 'none'
     }}>
       {/* 1. Brand Logo & Title (About Trigger) */}
-      <div 
+      <div
         onClick={onOpenAbout}
         title={onOpenAbout ? "About Developer & Application" : "White Devil's Music"}
         style={{
@@ -115,7 +115,7 @@ export default function Sidebar({
 
       {/* 2. User Account Pill / Card */}
       {onOpenAuthModal && (
-        <div 
+        <div
           onClick={onOpenAuthModal}
           title={currentUser ? `Signed in as @${currentUser.username}` : "Sign In or Create Account"}
           style={{
@@ -361,10 +361,10 @@ export default function Sidebar({
               if (!isRescanning) e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <RotateCw 
-              size={15} 
-              color="#e11d48" 
-              style={{ animation: isRescanning ? 'spin 1s linear infinite' : 'none' }} 
+            <RotateCw
+              size={15}
+              color="#e11d48"
+              style={{ animation: isRescanning ? 'spin 1s linear infinite' : 'none' }}
             />
             <span>{isRescanning ? 'Syncing Tracks...' : 'Sync Storage'}</span>
           </button>

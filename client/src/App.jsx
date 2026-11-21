@@ -34,7 +34,8 @@ import {
   saveTracksToIndexedDB, 
   updateTrackInIndexedDB, 
   applyStoredOverrides, 
-  saveStoredOverride 
+  saveStoredOverride,
+  clearAllStoredMusicTracks 
 } from './utils/localMusicStore';
 import { DEFAULT_LOCAL_TRACKS } from './defaultTracks';
 
@@ -185,6 +186,18 @@ export default function App() {
   // 1. App Launch: Load local tracks & sync with backend if online
   const loadLibraryData = async (activeUser = currentUser) => {
     const user = activeUser !== undefined ? activeUser : currentUser;
+
+    // One-time cache reset to permanently clear obsolete test tracks from browser storage
+    try {
+      const RESET_KEY = 'whitedevils_clean_library_v2';
+      if (typeof window !== 'undefined' && !localStorage.getItem(RESET_KEY)) {
+        await clearAllStoredMusicTracks();
+        localStorage.removeItem('white_devils_track_overrides');
+        localStorage.removeItem('white_devils_cached_tracks');
+        localStorage.setItem(RESET_KEY, 'true');
+      }
+    } catch (e) {}
+
     // Check IndexedDB for any cached user tracks
     try {
       const cached = await loadTracksFromIndexedDB();
@@ -455,9 +468,19 @@ export default function App() {
         const res = await authFetch('/api/tracks');
         if (!res.ok) return;
         const data = await res.json();
-        if (data.success && data.tracks && data.tracks.length > 0) {
+        if (data.success && Array.isArray(data.tracks)) {
+          const oldTestTitles = new Set([
+            'aavan jaavan mashup',
+            'gehra hua x sitaare',
+            'gehra hua',
+            'kala chashma',
+            'neha kakkar mashup',
+            'saki saki',
+            'soulmate mashup'
+          ]);
+          const serverTracks = data.tracks.filter(t => !oldTestTitles.has((t.title || '').trim().toLowerCase()));
           const uniqueSyncMap = new Map();
-          for (const t of data.tracks) {
+          for (const t of serverTracks) {
             if (t && t.id && !uniqueSyncMap.has(t.id)) {
               uniqueSyncMap.set(t.id, t);
             }
@@ -465,6 +488,9 @@ export default function App() {
           const deduplicated = Array.from(uniqueSyncMap.values());
           const merged = applyStoredOverrides(deduplicated, null, currentUser?.id);
           setTracks(prevTracks => {
+            if (merged.length === 0 && prevTracks.length > 0) {
+              return [];
+            }
             const prevIds = new Set(prevTracks.map(t => t.id));
             const hasNew = merged.some(t => !prevIds.has(t.id));
             if (hasNew || merged.length !== prevTracks.length) {

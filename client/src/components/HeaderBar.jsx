@@ -35,7 +35,7 @@ export default function HeaderBar({
         {/* Brand Label / About Section Trigger */}
         <div
           onClick={onOpenAbout}
-          title={onOpenAbout ? "About Developer & Application" : "White Devil's Music"}
+          title={onOpenAbout ? "About Developer & Application" : "Music"}
           style={{
             display: 'flex',
             alignItems: 'center',

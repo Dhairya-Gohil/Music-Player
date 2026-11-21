@@ -57,6 +57,22 @@ export async function saveTracksToIndexedDB(tracks) {
   }
 }
 
+// Clear all tracks in IndexedDB
+export async function clearAllStoredMusicTracks() {
+  try {
+    const db = await openMusicDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    return new Promise((res, rej) => {
+      const clearReq = store.clear();
+      clearReq.onsuccess = res;
+      clearReq.onerror = rej;
+    });
+  } catch (err) {
+    console.warn("Could not clear IndexedDB tracks store:", err);
+  }
+}
+
 // Update a single track in IndexedDB
 export async function updateTrackInIndexedDB(track) {
   try {
