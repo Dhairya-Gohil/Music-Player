@@ -798,4 +798,8 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, mergeOverrides, normalizeMetaKey, defaultSongsDir };
+module.exports = app;
+module.exports.app = app;
+module.exports.mergeOverrides = mergeOverrides;
+module.exports.normalizeMetaKey = normalizeMetaKey;
+module.exports.defaultSongsDir = defaultSongsDir;
