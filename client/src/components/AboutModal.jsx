@@ -23,7 +23,7 @@ export default function AboutModal({ isOpen, onClose }) {
     name: "Dhairya Gohil",
     alias: "White Devil",
     role: "Full-Stack Developer & UI Designer",
-    email: "gohildhairya1004@gmail.com",
+    email: "whitedvl404@gmail.com",
     phone: "+91 78598 989422",
     version: "v2.0.0 (Production)",
     releaseYear: "2026"
@@ -429,7 +429,7 @@ export default function AboutModal({ isOpen, onClose }) {
           borderTop: '1px solid rgba(0, 0, 0, 0.06)'
         }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>
-            White Devil's Music • {developerInfo.version}
+            Music • {developerInfo.version}
           </span>
 
           <button

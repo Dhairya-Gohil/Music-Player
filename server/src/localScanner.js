@@ -39,19 +39,12 @@ function parseFilenameFallback(filename) {
   };
 }
 
-// Get standard user audio folders on Windows (Downloads, Music, etc.)
+// Return only explicitly targeted directories; never traverse user OS directories (Music, Downloads) without permission
 function getStandardAudioDirs(targetSongsDir) {
-  const home = os.homedir();
-  const userProfile = process.env.USERPROFILE || home;
-
   const candidates = [];
   if (targetSongsDir) {
     candidates.push(path.normalize(targetSongsDir));
   }
-  candidates.push(path.join(userProfile, 'Music'));
-  candidates.push(path.join(home, 'Music'));
-  candidates.push(path.join(userProfile, 'Downloads'));
-  candidates.push(path.join(home, 'Downloads'));
 
   const uniqueDirs = Array.from(new Set(candidates.map(d => d ? path.normalize(d) : '')));
   return uniqueDirs.filter(dir => {
@@ -206,20 +199,16 @@ async function scanDirectory(dirPath, maxDepth = 2) {
 }
 
 // Scan all available music locations in-place (ZERO STORAGE OVERHEAD)
+// Strictly scans only the app's songs folder and explicit user-configured folders
 async function scanAllMusicLocations(defaultSongsDir, customSongsDir = null) {
   const searchDirs = new Set();
 
   if (defaultSongsDir && fs.existsSync(defaultSongsDir)) {
     searchDirs.add(path.normalize(defaultSongsDir));
   }
+  // Only scan customSongsDir if the user explicitly provided it
   if (customSongsDir && fs.existsSync(customSongsDir)) {
     searchDirs.add(path.normalize(customSongsDir));
-  }
-
-  // Include standard user audio folders (Downloads, Music, Desktop)
-  const standardDirs = getStandardAudioDirs(defaultSongsDir);
-  for (const sDir of standardDirs) {
-    searchDirs.add(path.normalize(sDir));
   }
 
   const allTracks = [];

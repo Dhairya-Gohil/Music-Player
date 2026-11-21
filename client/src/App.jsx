@@ -94,16 +94,16 @@ export default function App() {
   const [detailData, setDetailData] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Audio Playback State - Initialized to first local track
-  const [currentTrack, setCurrentTrack] = useState(DEFAULT_LOCAL_TRACKS[0] || null);
+  // Audio Playback State - Initialized clean with no phantom/default tracks
+  const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(DEFAULT_LOCAL_TRACKS[0]?.duration || 0);
+  const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.85);
   const [isMuted, setIsMuted] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState('off'); // 'off' | 'all' | 'one'
-  const [queue, setQueue] = useState(DEFAULT_LOCAL_TRACKS.slice(1));
+  const [queue, setQueue] = useState([]);
 
   // Desktop vs Mobile responsive detection
   const [isDesktop, setIsDesktop] = useState(() => {
@@ -188,20 +188,29 @@ export default function App() {
     // Check IndexedDB for any cached user tracks
     try {
       const cached = await loadTracksFromIndexedDB();
-      // ALWAYS ensure all 7 DEFAULT_LOCAL_TRACKS are merged in even if cache was from older session
-      const existingTitles = new Set((cached || []).map(c => (c.title || '').trim().toLowerCase()));
-      const missingDefaults = DEFAULT_LOCAL_TRACKS.filter(dt => !existingTitles.has((dt.title || '').trim().toLowerCase()));
-      const combined = [...(cached || []), ...missingDefaults];
-      const mergedCached = applyStoredOverrides(combined, null, user?.id);
+      // Purge any previously cached test tracks from browser storage
+      const oldTestTitles = new Set([
+        'aavan jaavan mashup',
+        'gehra hua x sitaare',
+        'gehra hua',
+        'kala chashma',
+        'neha kakkar mashup',
+        'saki saki',
+        'soulmate mashup'
+      ]);
+      const validCached = (cached || []).filter(c => !oldTestTitles.has((c.title || '').trim().toLowerCase()));
+      const mergedCached = applyStoredOverrides(validCached, null, user?.id);
       setTracks(mergedCached);
-      // Update IndexedDB cache so all 7 songs are cached in browser
       saveTracksToIndexedDB(mergedCached);
       if (!currentTrack && mergedCached.length > 0) {
         setCurrentTrack(mergedCached[0]);
         setQueue(mergedCached.slice(1));
+      } else if (mergedCached.length === 0) {
+        setCurrentTrack(null);
+        setQueue([]);
       }
     } catch (e) {
-      setTracks(applyStoredOverrides(DEFAULT_LOCAL_TRACKS, null, user?.id));
+      setTracks([]);
     }
 
     // Fetch from backend
@@ -216,14 +225,19 @@ export default function App() {
       const playlistsData = await playlistsRes.json();
       const todosData = await todosRes.json();
 
-      if (tracksData.success && tracksData.tracks && tracksData.tracks.length > 0) {
-        // Also ensure all default tracks are merged
-        const serverTracks = tracksData.tracks;
-        const serverTitles = new Set(serverTracks.map(t => (t.title || '').trim().toLowerCase()));
-        const missingFromDefaults = DEFAULT_LOCAL_TRACKS.filter(dt => !serverTitles.has((dt.title || '').trim().toLowerCase()));
-        const combinedServer = [...serverTracks, ...missingFromDefaults];
+      if (tracksData.success && Array.isArray(tracksData.tracks)) {
+        const oldTestTitles = new Set([
+          'aavan jaavan mashup',
+          'gehra hua x sitaare',
+          'gehra hua',
+          'kala chashma',
+          'neha kakkar mashup',
+          'saki saki',
+          'soulmate mashup'
+        ]);
+        const serverTracks = tracksData.tracks.filter(t => !oldTestTitles.has((t.title || '').trim().toLowerCase()));
         const uniqueTracksMap = new Map();
-        for (const t of combinedServer) {
+        for (const t of serverTracks) {
           if (t && t.id && !uniqueTracksMap.has(t.id)) {
             uniqueTracksMap.set(t.id, t);
           }
@@ -238,7 +252,7 @@ export default function App() {
         setCurrentTrack(prev => {
           if (!prev) return mergedTracks[0] || null;
           const found = mergedTracks.find(t => t.id === prev.id || (t.title && prev.title && t.title.toLowerCase() === prev.title.toLowerCase()));
-          return found || prev;
+          return found || null;
         });
         if (!currentTrack && mergedTracks.length > 0) {
           setQueue(mergedTracks.slice(1));
@@ -726,7 +740,7 @@ export default function App() {
       const inDetail = detailData.tracks.some(t => t.id === currentTrack?.id);
       if (inDetail) return detailData.tracks;
     }
-    return tracks.length > 0 ? tracks : DEFAULT_LOCAL_TRACKS;
+    return tracks;
   };
 
   // Generate a non-repeating randomized queue of remaining tracks for Shuffle mode
