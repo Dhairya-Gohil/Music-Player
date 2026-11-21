@@ -1,37 +1,28 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "client/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+  "services": {
+    "client": {
+      "root": "client"
     },
-    {
-      "src": "server/src/index.js",
-      "use": "@vercel/node"
+    "server": {
+      "root": "server"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "server/src/index.js"
+      "source": "/api/(.*)",
+      "destination": { "service": "server" }
     },
     {
-      "src": "/songs/(.*)",
-      "dest": "server/src/index.js"
+      "source": "/songs/(.*)",
+      "destination": { "service": "server" }
     },
     {
-      "src": "/uploads/(.*)",
-      "dest": "server/src/index.js"
+      "source": "/uploads/(.*)",
+      "destination": { "service": "server" }
     },
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "client/$1"
+      "source": "/(.*)",
+      "destination": { "service": "client" }
     }
   ]
 }
