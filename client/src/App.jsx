@@ -249,27 +249,35 @@ export default function App() {
           'soulmate mashup'
         ]);
         const serverTracks = tracksData.tracks.filter(t => !oldTestTitles.has((t.title || '').trim().toLowerCase()));
-        const uniqueTracksMap = new Map();
-        for (const t of serverTracks) {
-          if (t && t.id && !uniqueTracksMap.has(t.id)) {
-            uniqueTracksMap.set(t.id, t);
+        
+        // Preserve any browser storage tracks that the user imported
+        setTracks(prevTracks => {
+          const deviceTracks = (prevTracks || []).filter(t => (t.id && t.id.startsWith('device-track-')) || t.fileBlob);
+          const map = new Map();
+          for (const dt of deviceTracks) {
+            map.set(dt.id, dt);
           }
-        }
-        const deduplicated = Array.from(uniqueTracksMap.values());
-        const mergedTracks = applyStoredOverrides(deduplicated, null, user?.id);
-        setTracks(mergedTracks);
-        saveTracksToIndexedDB(mergedTracks);
+          for (const st of serverTracks) {
+            if (st && st.id && !map.has(st.id)) {
+              map.set(st.id, st);
+            }
+          }
+          const mergedList = Array.from(map.values());
+          const finalTracks = applyStoredOverrides(mergedList, null, user?.id);
+          saveTracksToIndexedDB(finalTracks);
+          
+          if (!currentTrack && finalTracks.length > 0) {
+            setCurrentTrack(finalTracks[0]);
+            setQueue(finalTracks.slice(1));
+          } else if (finalTracks.length === 0) {
+            setCurrentTrack(null);
+            setQueue([]);
+          }
+          return finalTracks;
+        });
+        
         setIsLocalStorageSource(true);
         if (tracksData.folder) setCurrentFolder(tracksData.folder);
-        // Refresh currentTrack with merged/server data if currently matching
-        setCurrentTrack(prev => {
-          if (!prev) return mergedTracks[0] || null;
-          const found = mergedTracks.find(t => t.id === prev.id || (t.title && prev.title && t.title.toLowerCase() === prev.title.toLowerCase()));
-          return found || null;
-        });
-        if (!currentTrack && mergedTracks.length > 0) {
-          setQueue(mergedTracks.slice(1));
-        }
       }
       if (playlistsData.success && Array.isArray(playlistsData.playlists)) {
         if (user) {
@@ -488,15 +496,21 @@ export default function App() {
           const deduplicated = Array.from(uniqueSyncMap.values());
           const merged = applyStoredOverrides(deduplicated, null, currentUser?.id);
           setTracks(prevTracks => {
-            if (merged.length === 0 && prevTracks.length > 0) {
-              return [];
+            const deviceTracks = (prevTracks || []).filter(t => (t.id && t.id.startsWith('device-track-')) || t.fileBlob);
+            const map = new Map();
+            for (const dt of deviceTracks) {
+              map.set(dt.id, dt);
             }
-            const prevIds = new Set(prevTracks.map(t => t.id));
-            const hasNew = merged.some(t => !prevIds.has(t.id));
-            if (hasNew || merged.length !== prevTracks.length) {
-              console.log(`[Auto-Sync] Discovered newly downloaded songs! (${prevTracks.length} -> ${merged.length})`);
-              showAppToast(`🎵 Library updated: ${merged.length} songs available`);
-              return merged;
+            for (const st of merged) {
+              if (st && st.id && !map.has(st.id)) {
+                map.set(st.id, st);
+              }
+            }
+            const combined = Array.from(map.values());
+            const prevIds = new Set((prevTracks || []).map(t => t.id));
+            const hasNew = combined.some(t => !prevIds.has(t.id));
+            if (hasNew || combined.length !== (prevTracks || []).length) {
+              return combined;
             }
             return prevTracks;
           });
