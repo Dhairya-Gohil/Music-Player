@@ -1,3 +1,12 @@
+---
+title: White Devils Music
+emoji: 🎵
+colorFrom: pink
+colorTo: red
+sdk: docker
+app_port: 7860
+---
+
 # 🎵 SoundWave - Modern Full-Stack Music Web App
 
 A modern, full-stack music player and library web application built with **React.js**, **Node.js (Express)**, and **Web Audio API** designed with the **"White Devil's Music"** light aesthetic.
