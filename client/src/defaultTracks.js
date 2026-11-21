@@ -9,7 +9,7 @@ export const DEFAULT_LOCAL_TRACKS = [
     genre: "Mashup",
     coverUrl: "/pink_image.png",
     useDefaultIcon: true,
-    audioUrl: "/api/stream/local?id=local-a54d508d4124214b087f8f3731b6bc36&file=Aavan%20Jaavan%20Mashup.m4a",
+    audioUrl: "/songs/Aavan%20Jaavan%20Mashup.m4a",
     relPath: "Aavan Jaavan Mashup.m4a",
     isLiked: false,
     isLocalFile: true
@@ -23,7 +23,7 @@ export const DEFAULT_LOCAL_TRACKS = [
     genre: "Music",
     coverUrl: "/pink_image.png",
     useDefaultIcon: true,
-    audioUrl: "/api/stream/local?id=local-318259dcee911a4826a608990803b325&file=Gehra%20Hua%20x%20Sitaare.m4a",
+    audioUrl: "/songs/Gehra%20Hua%20x%20Sitaare.m4a",
     relPath: "Gehra Hua x Sitaare.m4a",
     isLiked: false,
     isLocalFile: true
@@ -37,7 +37,7 @@ export const DEFAULT_LOCAL_TRACKS = [
     genre: "Music",
     coverUrl: "/pink_image.png",
     useDefaultIcon: true,
-    audioUrl: "/api/stream/local?id=local-9fd2e59fbade0ba48405c96c0632592f&file=Gehra%20Hua.m4a",
+    audioUrl: "/songs/Gehra%20Hua.m4a",
     relPath: "Gehra Hua.m4a",
     isLiked: false,
     isLocalFile: true
@@ -51,7 +51,7 @@ export const DEFAULT_LOCAL_TRACKS = [
     genre: "Music",
     coverUrl: "/pink_image.png",
     useDefaultIcon: true,
-    audioUrl: "/api/stream/local?id=local-7bb863c37c3cd0759285ce4c951a82f1&file=Kala%20Chashma.mp3",
+    audioUrl: "/songs/Kala%20Chashma.mp3",
     relPath: "Kala Chashma.mp3",
     isLiked: false,
     isLocalFile: true
@@ -65,7 +65,7 @@ export const DEFAULT_LOCAL_TRACKS = [
     genre: "Mashup",
     coverUrl: "/pink_image.png",
     useDefaultIcon: true,
-    audioUrl: "/api/stream/local?id=local-ddc5e63bf1bd505a1062d3dfd091258a&file=Neha%20Kakkar%20Mashup.mp3",
+    audioUrl: "/songs/Neha%20Kakkar%20Mashup.mp3",
     relPath: "Neha Kakkar Mashup.mp3",
     isLiked: false,
     isLocalFile: true
@@ -79,7 +79,7 @@ export const DEFAULT_LOCAL_TRACKS = [
     genre: "Music",
     coverUrl: "/pink_image.png",
     useDefaultIcon: true,
-    audioUrl: "/api/stream/local?id=local-917481ee3aec5fbf1b6270d214d6ba0d&file=Saki%20Saki.mp3",
+    audioUrl: "/songs/Saki%20Saki.mp3",
     relPath: "Saki Saki.mp3",
     isLiked: false,
     isLocalFile: true
@@ -93,7 +93,7 @@ export const DEFAULT_LOCAL_TRACKS = [
     genre: "Mashup",
     coverUrl: "/pink_image.png",
     useDefaultIcon: true,
-    audioUrl: "/api/stream/local?id=local-98993088ab5673d59622b1b119738f46&file=Soulmate%20Mashup.m4a",
+    audioUrl: "/songs/Soulmate%20Mashup.m4a",
     relPath: "Soulmate Mashup.m4a",
     isLiked: false,
     isLocalFile: true
