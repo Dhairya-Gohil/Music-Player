@@ -20,22 +20,22 @@ import AboutModal from './components/AboutModal';
 import Sidebar from './components/Sidebar';
 import Player from './components/Player';
 import { Search, RotateCw, User, X } from 'lucide-react';
-import { 
-  getStoredToken, 
-  getStoredUser, 
-  setSession, 
-  clearSession, 
-  authFetch, 
+import {
+  getStoredToken,
+  getStoredUser,
+  setSession,
+  clearSession,
+  authFetch,
   getUserPlaylistsKey,
   getUserOverridesKey
 } from './utils/auth';
-import { 
-  loadTracksFromIndexedDB, 
-  saveTracksToIndexedDB, 
-  updateTrackInIndexedDB, 
-  applyStoredOverrides, 
+import {
+  loadTracksFromIndexedDB,
+  saveTracksToIndexedDB,
+  updateTrackInIndexedDB,
+  applyStoredOverrides,
   saveStoredOverride,
-  clearAllStoredMusicTracks 
+  clearAllStoredMusicTracks
 } from './utils/localMusicStore';
 import { DEFAULT_LOCAL_TRACKS } from './defaultTracks';
 
@@ -53,7 +53,7 @@ function loadStoredPlaylists(userId = null) {
       // Purge any stale dummy playlists (like Dhurandhar Special, DJ, Party Vibes)
       return parsed.filter(p => p && p.id !== 'playlist-1' && p.id !== 'playlist-2' && p.name !== 'DJ' && p.name !== 'Party Vibes');
     }
-  } catch (e) {}
+  } catch (e) { }
   return [];
 }
 
@@ -63,7 +63,7 @@ function saveStoredPlaylists(playlistsList, userId = null) {
     const key = getUserPlaylistsKey(userId);
     const cleanList = (playlistsList || []).filter(p => p && p.id !== 'playlist-1' && p.id !== 'playlist-2' && p.name !== 'DJ' && p.name !== 'Party Vibes');
     localStorage.setItem(key, JSON.stringify(cleanList));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 export default function App() {
@@ -196,9 +196,8 @@ export default function App() {
         localStorage.removeItem('white_devils_cached_tracks');
         localStorage.setItem(RESET_KEY, 'true');
       }
-    } catch (e) {}
+    } catch (e) { }
 
-    // Check IndexedDB for any cached user tracks
     try {
       const cached = await loadTracksFromIndexedDB();
       // Purge any previously cached test tracks from browser storage
@@ -249,7 +248,7 @@ export default function App() {
           'soulmate mashup'
         ]);
         const serverTracks = tracksData.tracks.filter(t => !oldTestTitles.has((t.title || '').trim().toLowerCase()));
-        
+
         // Preserve any browser storage tracks that the user imported
         setTracks(prevTracks => {
           const deviceTracks = (prevTracks || []).filter(t => (t.id && t.id.startsWith('device-track-')) || t.fileBlob);
@@ -265,7 +264,7 @@ export default function App() {
           const mergedList = Array.from(map.values());
           const finalTracks = applyStoredOverrides(mergedList, null, user?.id);
           saveTracksToIndexedDB(finalTracks);
-          
+
           if (!currentTrack && finalTracks.length > 0) {
             setCurrentTrack(finalTracks[0]);
             setQueue(finalTracks.slice(1));
@@ -275,7 +274,7 @@ export default function App() {
           }
           return finalTracks;
         });
-        
+
         setIsLocalStorageSource(true);
         if (tracksData.folder) setCurrentFolder(tracksData.folder);
       }
@@ -296,7 +295,7 @@ export default function App() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(up)
-            }).catch(() => {});
+            }).catch(() => { });
           }
         } else {
           // Guest mode: preserve local playlists, NEVER overwrite with empty server array!
@@ -410,7 +409,7 @@ export default function App() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(mp)
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
       saveStoredPlaylists([], null);
@@ -431,7 +430,7 @@ export default function App() {
   useEffect(() => {
     // Non-intrusively request Notification permission for lock-screen & status-bar playback controls
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
+      Notification.requestPermission().catch(() => { });
     }
 
     // Verify token validity on launch
@@ -515,7 +514,7 @@ export default function App() {
             return prevTracks;
           });
         }
-      } catch (e) {}
+      } catch (e) { }
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -540,7 +539,7 @@ export default function App() {
       }
       const ctx = audioCtxRef.current;
       if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
+        ctx.resume().catch(() => { });
       }
 
       if (!filtersRef.current || filtersRef.current.length === 0) {
@@ -636,7 +635,7 @@ export default function App() {
     if (!track) return;
     initWebAudio();
     if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume().catch(() => {});
+      audioCtxRef.current.resume().catch(() => { });
     }
 
     const targetUrl = track.audioUrl || (track.relPath ? `/api/stream/local?id=${encodeURIComponent(track.id)}&file=${encodeURIComponent(track.relPath)}` : '');
@@ -722,7 +721,7 @@ export default function App() {
           tag: 'white-devils-now-playing',
           silent: true
         });
-      } catch (notifErr) {}
+      } catch (notifErr) { }
     }
 
     if (audioRef.current) {
@@ -1171,7 +1170,7 @@ export default function App() {
   const handleOpenEqualizer = () => {
     initWebAudio();
     if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume().catch(() => {});
+      audioCtxRef.current.resume().catch(() => { });
     }
     pushLayer('equalizer');
     setIsEqualizerOpen(true);
@@ -1411,7 +1410,7 @@ export default function App() {
   const renderMainContent = (isDesktopView = false) => {
     if (currentView === 'detail' && detailData) {
       return (
-        <DetailSongPage 
+        <DetailSongPage
           id={detailData.id}
           title={detailData.title}
           subtitle={detailData.subtitle}
@@ -1437,7 +1436,7 @@ export default function App() {
     return (
       <>
         {activeTab === 'songs' && (
-          <SongsTab 
+          <SongsTab
             tracks={filteredTracks}
             currentTrack={currentTrack}
             isPlaying={isPlaying}
@@ -1452,21 +1451,21 @@ export default function App() {
         )}
 
         {activeTab === 'artists' && (
-          <ArtistsTab 
+          <ArtistsTab
             tracks={filteredTracks}
             onSelectArtist={handleSelectArtist}
           />
         )}
 
         {activeTab === 'albums' && (
-          <AlbumsTab 
+          <AlbumsTab
             tracks={filteredTracks}
             onSelectAlbum={handleSelectAlbum}
           />
         )}
 
         {activeTab === 'playlists' && (
-          <PlaylistsTab 
+          <PlaylistsTab
             playlists={playlists}
             tracks={tracks}
             onSelectPlaylist={handleSelectPlaylist}
@@ -1483,7 +1482,7 @@ export default function App() {
   const renderModals = () => (
     <>
       {/* Full-Screen / Centered Now Playing Screen */}
-      <NowPlayingScreen 
+      <NowPlayingScreen
         isOpen={isNowPlayingOpen}
         onClose={() => closeLayer('now-playing')}
         currentTrack={currentTrack}
@@ -1509,7 +1508,7 @@ export default function App() {
       />
 
       {/* Storage & Notification Access Permission Modal */}
-      <PermissionModal 
+      <PermissionModal
         isOpen={isPermissionModalOpen}
         onClose={() => closeLayer('permission')}
         onTracksImported={(imported) => {
@@ -1523,7 +1522,7 @@ export default function App() {
       />
 
       {/* To-Do List Dialog */}
-      <TodoListDialog 
+      <TodoListDialog
         isOpen={isTodoListOpen}
         onClose={() => closeLayer('todo-list')}
         todos={todos}
@@ -1533,7 +1532,7 @@ export default function App() {
       />
 
       {/* Edit Song Info Modal */}
-      <EditSongInfoModal 
+      <EditSongInfoModal
         isOpen={isEditSongOpen}
         onClose={() => closeLayer('edit-song')}
         track={songToEdit}
@@ -1541,7 +1540,7 @@ export default function App() {
       />
 
       {/* Edit Playlist Modal */}
-      <EditPlaylistModal 
+      <EditPlaylistModal
         isOpen={isEditPlaylistOpen}
         onClose={() => closeLayer('edit-playlist')}
         playlist={playlistToEdit}
@@ -1550,14 +1549,14 @@ export default function App() {
       />
 
       {/* Create Playlist Modal */}
-      <PlaylistModal 
+      <PlaylistModal
         isOpen={isCreatePlaylistOpen}
         onClose={() => closeLayer('create-playlist')}
         onCreatePlaylist={handleCreatePlaylist}
       />
 
       {/* Upload Music Modal */}
-      <UploadModal 
+      <UploadModal
         isOpen={isUploadOpen}
         onClose={() => closeLayer('upload')}
         onUploadSuccess={(newTrack) => {
@@ -1567,7 +1566,7 @@ export default function App() {
       />
 
       {/* Studio 5-Band Equalizer */}
-      <EqualizerModal 
+      <EqualizerModal
         isOpen={isEqualizerOpen}
         onClose={() => closeLayer('equalizer')}
         eqGains={eqGains}
@@ -1579,7 +1578,7 @@ export default function App() {
           setCurrentPreset('Custom');
           const ctx = audioCtxRef.current;
           if (ctx && ctx.state === 'suspended') {
-            ctx.resume().catch(() => {});
+            ctx.resume().catch(() => { });
           }
           if (filtersRef.current && filtersRef.current[bandIdx]) {
             try {
@@ -1597,7 +1596,7 @@ export default function App() {
           setCurrentPreset(presetName);
           const ctx = audioCtxRef.current;
           if (ctx && ctx.state === 'suspended') {
-            ctx.resume().catch(() => {});
+            ctx.resume().catch(() => { });
           }
           presetVals.forEach((val, idx) => {
             if (filtersRef.current && filtersRef.current[idx]) {
@@ -1612,7 +1611,7 @@ export default function App() {
       />
 
       {/* Private Multi-User Authentication Modal */}
-      <AuthModal 
+      <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => closeLayer('auth')}
         currentUser={currentUser}
@@ -1622,7 +1621,7 @@ export default function App() {
       />
 
       {/* Developer & Application About Modal */}
-      <AboutModal 
+      <AboutModal
         isOpen={isAboutOpen}
         onClose={() => closeLayer('about')}
       />
@@ -1658,7 +1657,7 @@ export default function App() {
   return (
     <>
       {/* Root Persistent Audio Element - Mounted permanently at component root, never unmounts */}
-      <audio 
+      <audio
         ref={audioRef}
         crossOrigin="anonymous"
         onPlay={() => setIsPlaying(true)}
@@ -1688,360 +1687,360 @@ export default function App() {
 
       {isDesktop ? (
         <div style={{
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: '#f8fafc',
-        display: 'flex',
-        overflow: 'hidden',
-        position: 'relative'
-      }}>
-        {/* Left Desktop Navigation Sidebar */}
-        <Sidebar 
-          activeTab={activeTab}
-          setActiveTab={(tab) => {
-            setActiveTab(tab);
-            if (layersRef.current.includes('detail')) {
-              closeLayer('detail');
-            } else {
-              setCurrentView('library');
-            }
-          }}
-          playlists={playlists}
-          onSelectPlaylist={handleSelectPlaylist}
-          onOpenLikedSongs={handleOpenLikedSongs}
-          onOpenCreatePlaylist={handleOpenCreatePlaylist}
-          onOpenEqualizer={handleOpenEqualizer}
-          onOpenTodoList={handleOpenTodoList}
-          onOpenUpload={handleOpenUpload}
-          onRescan={handleRescanLocalFolder}
-          isRescanning={isRescanning}
-          currentUser={currentUser}
-          onOpenAuthModal={handleOpenAuthModal}
-          totalSongCount={tracks.length}
-          onRequestPermission={handleOpenPermissionModal}
-          onOpenAbout={handleOpenAbout}
-        />
-
-        {/* Main Desktop Content Area */}
-        <div style={{
-          flex: 1,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#f8fafc',
           display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          minWidth: 0,
           overflow: 'hidden',
           position: 'relative'
         }}>
-          {/* Top Desktop Navigation & Search Header */}
-          <header style={{
-            padding: '16px 36px 14px 36px',
-            borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-            backgroundColor: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '20px',
-            flexShrink: 0
-          }}>
-            {/* Search Input */}
-            <div style={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: '460px',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '14px', pointerEvents: 'none' }} />
-              <input 
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search songs, artists, albums..."
-                style={{
-                  width: '100%',
-                  padding: '10px 38px 10px 40px',
-                  borderRadius: '9999px',
-                  border: '1px solid #e2e8f0',
-                  backgroundColor: '#f8fafc',
-                  fontSize: '13.5px',
-                  color: '#0f172a',
-                  outline: 'none',
-                  transition: 'all 0.15s ease'
-                }}
-                onFocus={(e) => {
-                  e.target.style.backgroundColor = '#ffffff';
-                  e.target.style.borderColor = 'var(--accent-pink)';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(224, 36, 106, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.backgroundColor = '#f8fafc';
-                  e.target.style.borderColor = '#e2e8f0';
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  style={{
-                    position: 'absolute',
-                    right: '12px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#94a3b8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '2px'
-                  }}
-                >
-                  <X size={15} />
-                </button>
-              )}
-            </div>
-
-            {/* Quick Header Controls */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-              {/* Sync Button */}
-              <button
-                onClick={handleRescanLocalFolder}
-                disabled={isRescanning}
-                title="Sync local tracks"
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '9999px',
-                  border: '1.5px solid #fecdd3',
-                  backgroundColor: isRescanning ? '#fecdd3' : '#fff1f2',
-                  color: '#e11d48',
-                  fontSize: '12.5px',
-                  fontWeight: '700',
-                  cursor: isRescanning ? 'default' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <RotateCw size={13} style={{ animation: isRescanning ? 'spin 1s linear infinite' : 'none' }} />
-                <span>{isRescanning ? 'Syncing...' : 'Sync'}</span>
-              </button>
-
-              {/* To-Do List Action */}
-              <button
-                onClick={handleOpenTodoList}
-                className="btn-red-action"
-                style={{ padding: '7px 18px', fontSize: '12.5px', borderRadius: '9999px' }}
-              >
-                List
-              </button>
-
-              {/* User Account Button */}
-              <button
-                onClick={handleOpenAuthModal}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '9999px',
-                  border: currentUser ? '1.5px solid #bbf7d0' : '1.5px solid #e2e8f0',
-                  backgroundColor: currentUser ? '#f0fdf4' : '#ffffff',
-                  color: currentUser ? '#15803d' : '#334155',
-                  fontSize: '12.5px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  background: currentUser ? 'linear-gradient(135deg, #10b981, #059669)' : '#e2e8f0',
-                  color: currentUser ? '#fff' : '#64748b',
-                  fontSize: '10.5px',
-                  fontWeight: '800',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {currentUser ? (currentUser.name || currentUser.username || 'U')[0].toUpperCase() : <User size={12} />}
-                </div>
-                <span>{currentUser ? (currentUser.name || currentUser.username) : 'Sign In'}</span>
-              </button>
-            </div>
-          </header>
-
-          {/* Desktop Content Scroll Viewport */}
-          <main style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '24px 36px 110px 36px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px'
-          }}>
-            {/* Header info when in Library Hub */}
-            {currentView === 'library' && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'space-between',
-                paddingBottom: '8px',
-                borderBottom: '1px solid rgba(0, 0, 0, 0.04)'
-              }}>
-                <div>
-                  <h2 style={{
-                    fontSize: '26px',
-                    fontWeight: '800',
-                    color: '#0f172a',
-                    margin: '0 0 4px 0',
-                    letterSpacing: '-0.5px'
-                  }}>
-                    {activeTab === 'songs' && 'Made For Your Ears.'}
-                    {activeTab === 'artists' && 'Artists'}
-                    {activeTab === 'albums' && 'Albums'}
-                    {activeTab === 'playlists' && 'Playlists'}
-                  </h2>
-                  <div style={{
-                    fontSize: '13px',
-                    color: '#64748b',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
-                    <span>{tracks.length} songs in your library</span>
-                    {isLocalStorageSource && (
-                      <span 
-                        onClick={handleOpenPermissionModal}
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          padding: '2px 8px',
-                          borderRadius: '9999px',
-                          backgroundColor: '#fdeef1',
-                          color: '#e0246a',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Local Storage
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {renderMainContent(true)}
-          </main>
-        </div>
-
-        {/* Desktop Fixed Bottom Player */}
-        <Player 
-          currentTrack={currentTrack}
-          isPlaying={isPlaying}
-          onTogglePlay={handleTogglePlay}
-          onPrev={handlePrevTrack}
-          onNext={() => handleNextTrack(false)}
-          currentTime={currentTime}
-          duration={duration}
-          onSeek={handleSeek}
-          volume={volume}
-          onChangeVolume={handleChangeVolume}
-          isMuted={isMuted}
-          onToggleMute={handleToggleMute}
-          isShuffle={isShuffle}
-          onToggleShuffle={handleToggleShuffle}
-          repeatMode={repeatMode}
-          onToggleRepeat={handleToggleRepeat}
-          isLiked={currentTrack ? tracks.find(t => t.id === currentTrack.id)?.isLiked : false}
-          onToggleLike={handleToggleLike}
-          onOpenEqualizer={handleOpenEqualizer}
-          onOpenNowPlaying={handleOpenNowPlaying}
-          onEditSong={handleOpenEditSong}
-        />
-
-        </div>
-      ) : (
-        <div style={{
-      width: '100%',
-      minHeight: '100vh',
-      backgroundColor: '#ffffff',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'stretch'
-    }}>
-      {/* Mobile App Viewport Container */}
-      <div style={{
-        width: '100%',
-        maxWidth: '480px',
-        minHeight: '100vh',
-        height: '100vh',
-        backgroundColor: '#ffffff',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: '0 20px 50px -10px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(226, 232, 240, 0.8)'
-      }}>
-        {/* Top Header Bar */}
-        {currentView === 'library' && (
-          <HeaderBar 
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onOpenTodoList={handleOpenTodoList}
-            totalSongCount={tracks.length}
-            isLocalStorageSource={isLocalStorageSource}
-            onRescan={handleRescanLocalFolder}
-            isRescanning={isRescanning}
-            currentUser={currentUser}
-            onOpenAuthModal={handleOpenAuthModal}
-            onOpenPermissionModal={handleOpenPermissionModal}
-            onOpenAbout={handleOpenAbout}
-            onOpenEqualizer={handleOpenEqualizer}
-          />
-        )}
-
-        {/* Main Content Area */}
-        <main style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '16px 20px 150px 20px',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {renderMainContent(false)}
-        </main>
-
-        {/* Sticky Mini Player */}
-        <div style={{ maxWidth: '480px', width: '100%', margin: '0 auto' }}>
-          <MiniPlayer 
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-            onTogglePlay={handleTogglePlay}
-            onPrev={() => handlePrevTrack()}
-            onNext={() => handleNextTrack(false)}
-            onOpenNowPlaying={handleOpenNowPlaying}
-            currentTime={currentTime}
-            duration={duration}
-            onSeek={handleSeek}
-            isLiked={currentTrack ? tracks.find(t => t.id === currentTrack.id)?.isLiked : false}
-            onToggleLike={handleToggleLike}
-          />
-        </div>
-
-        {/* Bottom Navigation Bar */}
-        <div style={{ maxWidth: '480px', width: '100%', margin: '0 auto' }}>
-          <BottomNavBar 
+          {/* Left Desktop Navigation Sidebar */}
+          <Sidebar
             activeTab={activeTab}
-            onSelectTab={(tabId) => {
-              setActiveTab(tabId);
+            setActiveTab={(tab) => {
+              setActiveTab(tab);
               if (layersRef.current.includes('detail')) {
                 closeLayer('detail');
               } else {
                 setCurrentView('library');
               }
             }}
+            playlists={playlists}
+            onSelectPlaylist={handleSelectPlaylist}
+            onOpenLikedSongs={handleOpenLikedSongs}
+            onOpenCreatePlaylist={handleOpenCreatePlaylist}
+            onOpenEqualizer={handleOpenEqualizer}
+            onOpenTodoList={handleOpenTodoList}
+            onOpenUpload={handleOpenUpload}
+            onRescan={handleRescanLocalFolder}
+            isRescanning={isRescanning}
+            currentUser={currentUser}
+            onOpenAuthModal={handleOpenAuthModal}
+            totalSongCount={tracks.length}
+            onRequestPermission={handleOpenPermissionModal}
+            onOpenAbout={handleOpenAbout}
           />
+
+          {/* Main Desktop Content Area */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            minWidth: 0,
+            overflow: 'hidden',
+            position: 'relative'
+          }}>
+            {/* Top Desktop Navigation & Search Header */}
+            <header style={{
+              padding: '16px 36px 14px 36px',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+              backgroundColor: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '20px',
+              flexShrink: 0
+            }}>
+              {/* Search Input */}
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '460px',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '14px', pointerEvents: 'none' }} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search songs, artists, albums..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 38px 10px 40px',
+                    borderRadius: '9999px',
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#f8fafc',
+                    fontSize: '13.5px',
+                    color: '#0f172a',
+                    outline: 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.backgroundColor = '#ffffff';
+                    e.target.style.borderColor = 'var(--accent-pink)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(224, 36, 106, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.backgroundColor = '#f8fafc';
+                    e.target.style.borderColor = '#e2e8f0';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#94a3b8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '2px'
+                    }}
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Header Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                {/* Sync Button */}
+                <button
+                  onClick={handleRescanLocalFolder}
+                  disabled={isRescanning}
+                  title="Sync local tracks"
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '9999px',
+                    border: '1.5px solid #fecdd3',
+                    backgroundColor: isRescanning ? '#fecdd3' : '#fff1f2',
+                    color: '#e11d48',
+                    fontSize: '12.5px',
+                    fontWeight: '700',
+                    cursor: isRescanning ? 'default' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <RotateCw size={13} style={{ animation: isRescanning ? 'spin 1s linear infinite' : 'none' }} />
+                  <span>{isRescanning ? 'Syncing...' : 'Sync'}</span>
+                </button>
+
+                {/* To-Do List Action */}
+                <button
+                  onClick={handleOpenTodoList}
+                  className="btn-red-action"
+                  style={{ padding: '7px 18px', fontSize: '12.5px', borderRadius: '9999px' }}
+                >
+                  List
+                </button>
+
+                {/* User Account Button */}
+                <button
+                  onClick={handleOpenAuthModal}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '9999px',
+                    border: currentUser ? '1.5px solid #bbf7d0' : '1.5px solid #e2e8f0',
+                    backgroundColor: currentUser ? '#f0fdf4' : '#ffffff',
+                    color: currentUser ? '#15803d' : '#334155',
+                    fontSize: '12.5px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    background: currentUser ? 'linear-gradient(135deg, #10b981, #059669)' : '#e2e8f0',
+                    color: currentUser ? '#fff' : '#64748b',
+                    fontSize: '10.5px',
+                    fontWeight: '800',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    {currentUser ? (currentUser.name || currentUser.username || 'U')[0].toUpperCase() : <User size={12} />}
+                  </div>
+                  <span>{currentUser ? (currentUser.name || currentUser.username) : 'Sign In'}</span>
+                </button>
+              </div>
+            </header>
+
+            {/* Desktop Content Scroll Viewport */}
+            <main style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '24px 36px 110px 36px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}>
+              {/* Header info when in Library Hub */}
+              {currentView === 'library' && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                  paddingBottom: '8px',
+                  borderBottom: '1px solid rgba(0, 0, 0, 0.04)'
+                }}>
+                  <div>
+                    <h2 style={{
+                      fontSize: '26px',
+                      fontWeight: '800',
+                      color: '#0f172a',
+                      margin: '0 0 4px 0',
+                      letterSpacing: '-0.5px'
+                    }}>
+                      {activeTab === 'songs' && 'Made For Your Ears.'}
+                      {activeTab === 'artists' && 'Artists'}
+                      {activeTab === 'albums' && 'Albums'}
+                      {activeTab === 'playlists' && 'Playlists'}
+                    </h2>
+                    <div style={{
+                      fontSize: '13px',
+                      color: '#64748b',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span>{tracks.length} songs in your library</span>
+                      {isLocalStorageSource && (
+                        <span
+                          onClick={handleOpenPermissionModal}
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                            backgroundColor: '#fdeef1',
+                            color: '#e0246a',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Local Storage
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {renderMainContent(true)}
+            </main>
+          </div>
+
+          {/* Desktop Fixed Bottom Player */}
+          <Player
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
+            onTogglePlay={handleTogglePlay}
+            onPrev={handlePrevTrack}
+            onNext={() => handleNextTrack(false)}
+            currentTime={currentTime}
+            duration={duration}
+            onSeek={handleSeek}
+            volume={volume}
+            onChangeVolume={handleChangeVolume}
+            isMuted={isMuted}
+            onToggleMute={handleToggleMute}
+            isShuffle={isShuffle}
+            onToggleShuffle={handleToggleShuffle}
+            repeatMode={repeatMode}
+            onToggleRepeat={handleToggleRepeat}
+            isLiked={currentTrack ? tracks.find(t => t.id === currentTrack.id)?.isLiked : false}
+            onToggleLike={handleToggleLike}
+            onOpenEqualizer={handleOpenEqualizer}
+            onOpenNowPlaying={handleOpenNowPlaying}
+            onEditSong={handleOpenEditSong}
+          />
+
         </div>
+      ) : (
+        <div style={{
+          width: '100%',
+          minHeight: '100vh',
+          backgroundColor: '#ffffff',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'stretch'
+        }}>
+          {/* Mobile App Viewport Container */}
+          <div style={{
+            width: '100%',
+            maxWidth: '480px',
+            minHeight: '100vh',
+            height: '100vh',
+            backgroundColor: '#ffffff',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 20px 50px -10px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(226, 232, 240, 0.8)'
+          }}>
+            {/* Top Header Bar */}
+            {currentView === 'library' && (
+              <HeaderBar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onOpenTodoList={handleOpenTodoList}
+                totalSongCount={tracks.length}
+                isLocalStorageSource={isLocalStorageSource}
+                onRescan={handleRescanLocalFolder}
+                isRescanning={isRescanning}
+                currentUser={currentUser}
+                onOpenAuthModal={handleOpenAuthModal}
+                onOpenPermissionModal={handleOpenPermissionModal}
+                onOpenAbout={handleOpenAbout}
+                onOpenEqualizer={handleOpenEqualizer}
+              />
+            )}
+
+            {/* Main Content Area */}
+            <main style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '16px 20px 150px 20px',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              {renderMainContent(false)}
+            </main>
+
+            {/* Sticky Mini Player */}
+            <div style={{ maxWidth: '480px', width: '100%', margin: '0 auto' }}>
+              <MiniPlayer
+                currentTrack={currentTrack}
+                isPlaying={isPlaying}
+                onTogglePlay={handleTogglePlay}
+                onPrev={() => handlePrevTrack()}
+                onNext={() => handleNextTrack(false)}
+                onOpenNowPlaying={handleOpenNowPlaying}
+                currentTime={currentTime}
+                duration={duration}
+                onSeek={handleSeek}
+                isLiked={currentTrack ? tracks.find(t => t.id === currentTrack.id)?.isLiked : false}
+                onToggleLike={handleToggleLike}
+              />
+            </div>
+
+            {/* Bottom Navigation Bar */}
+            <div style={{ maxWidth: '480px', width: '100%', margin: '0 auto' }}>
+              <BottomNavBar
+                activeTab={activeTab}
+                onSelectTab={(tabId) => {
+                  setActiveTab(tabId);
+                  if (layersRef.current.includes('detail')) {
+                    closeLayer('detail');
+                  } else {
+                    setCurrentView('library');
+                  }
+                }}
+              />
+            </div>
 
           </div>
         </div>
