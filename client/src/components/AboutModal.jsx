@@ -22,7 +22,7 @@ export default function AboutModal({ isOpen, onClose }) {
   const developerInfo = {
     name: "Dhairya Gohil",
     alias: "White Devil",
-    role: "Full-Stack Developer & UI Designer",
+    role: "Developer & Designer",
     email: "whitedvl404@gmail.com",
     phone: "+91 78598 989422",
     version: "v2.0.0 (Production)",
@@ -123,15 +123,15 @@ export default function AboutModal({ isOpen, onClose }) {
           gap: '12px',
           position: 'relative'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             {/* Avatar Badge */}
             <div style={{
-              width: '48px',
-              height: '48px',
+              width: '52px',
+              height: '52px',
               borderRadius: '16px',
               background: 'linear-gradient(135deg, #e0246a, #cc3344)',
               color: '#ffffff',
-              fontSize: '22px',
+              fontSize: '24px',
               fontWeight: '900',
               display: 'flex',
               alignItems: 'center',
@@ -160,40 +160,36 @@ export default function AboutModal({ isOpen, onClose }) {
               </span>
             </div>
 
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
-                <h3 style={{
-                  fontSize: '16px',
-                  fontWeight: '800',
-                  color: '#0f172a',
-                  margin: 0,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {developerInfo.name}
-                </h3>
+            <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <h3 style={{
+                fontSize: '17px',
+                fontWeight: '800',
+                color: '#0f172a',
+                margin: 0,
+                lineHeight: '1.2'
+              }}>
+                {developerInfo.name}
+              </h3>
+
+              <div>
                 <span style={{
-                  fontSize: '10px',
+                  fontSize: '10.5px',
                   fontWeight: '700',
                   color: '#e0246a',
                   backgroundColor: 'rgba(224, 36, 106, 0.1)',
-                  padding: '2px 7px',
+                  padding: '2px 8px',
                   borderRadius: '9999px',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0
+                  display: 'inline-block'
                 }}>
                   {developerInfo.alias}
                 </span>
               </div>
+
               <p style={{
                 fontSize: '12px',
                 color: '#64748b',
                 fontWeight: '600',
-                margin: '2px 0 0 0',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
+                margin: 0
               }}>
                 {developerInfo.role}
               </p>
