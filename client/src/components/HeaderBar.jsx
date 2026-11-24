@@ -69,16 +69,16 @@ export default function HeaderBar({
             <Music size={12} />
           </div>
           <span style={{
-            fontSize: '11.5px',
+            fontSize: '12px',
             fontWeight: '800',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.06em',
             textTransform: 'uppercase',
             color: 'var(--accent-red, #cc3344)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}>
-            WHITE DEVIL'S MUSIC
+            MUSIC
           </span>
         </div>
 

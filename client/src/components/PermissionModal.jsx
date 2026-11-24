@@ -28,7 +28,7 @@ export default function PermissionModal({
         if (perm === 'granted') {
           setNotificationGranted(true);
           try {
-            new Notification("WHITE DEVIL's MUSIC", {
+            new Notification("MUSIC", {
               body: "Notifications enabled! You will now see playback updates in your status bar.",
               icon: "/favicon.ico"
             });
@@ -201,7 +201,7 @@ export default function PermissionModal({
                 Storage & Notifications
               </h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
-                WHITE DEVIL's MUSIC Device Access
+                Music Device Access
               </p>
             </div>
           </div>

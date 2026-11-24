@@ -48,10 +48,10 @@ export default function AboutModal({ isOpen, onClose }) {
           maxHeight: '90vh',
           backgroundColor: '#ffffff',
           borderRadius: '24px',
-          padding: '24px',
+          padding: '20px 18px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '18px',
+          gap: '16px',
           boxShadow: '0 25px 60px rgba(15, 23, 42, 0.16)',
           border: '1px solid rgba(0, 0, 0, 0.06)',
           overflowY: 'auto',
@@ -85,7 +85,7 @@ export default function AboutModal({ isOpen, onClose }) {
                 About Application
               </h2>
               <p style={{ fontSize: '11.5px', color: '#64748b', margin: 0 }}>
-                White Devil's Music Studio
+                Music Studio
               </p>
             </div>
           </div>
@@ -116,27 +116,27 @@ export default function AboutModal({ isOpen, onClose }) {
         <div style={{
           background: 'linear-gradient(135deg, #fff0f3 0%, #fdeef1 100%)',
           borderRadius: '18px',
-          padding: '18px',
+          padding: '16px',
           border: '1px solid #fecdd3',
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
           position: 'relative'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {/* Avatar Badge */}
             <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '18px',
+              width: '48px',
+              height: '48px',
+              borderRadius: '16px',
               background: 'linear-gradient(135deg, #e0246a, #cc3344)',
               color: '#ffffff',
-              fontSize: '24px',
+              fontSize: '22px',
               fontWeight: '900',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 6px 18px rgba(224, 36, 106, 0.25)',
+              boxShadow: '0 4px 14px rgba(224, 36, 106, 0.25)',
               position: 'relative',
               flexShrink: 0
             }}>
@@ -145,8 +145,8 @@ export default function AboutModal({ isOpen, onClose }) {
                 position: 'absolute',
                 bottom: '-2px',
                 right: '-2px',
-                width: '18px',
-                height: '18px',
+                width: '16px',
+                height: '16px',
                 borderRadius: '50%',
                 backgroundColor: '#10b981',
                 border: '2px solid #ffffff',
@@ -154,38 +154,46 @@ export default function AboutModal({ isOpen, onClose }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#ffffff',
-                fontSize: '10px'
+                fontSize: '9px'
               }}>
                 ✓
               </span>
             </div>
 
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
                 <h3 style={{
-                  fontSize: '18px',
+                  fontSize: '16px',
                   fontWeight: '800',
                   color: '#0f172a',
-                  margin: 0
+                  margin: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
                 }}>
                   {developerInfo.name}
                 </h3>
                 <span style={{
-                  fontSize: '10.5px',
+                  fontSize: '10px',
                   fontWeight: '700',
                   color: '#e0246a',
                   backgroundColor: 'rgba(224, 36, 106, 0.1)',
-                  padding: '2px 8px',
-                  borderRadius: '9999px'
+                  padding: '2px 7px',
+                  borderRadius: '9999px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}>
                   {developerInfo.alias}
                 </span>
               </div>
               <p style={{
-                fontSize: '12.5px',
+                fontSize: '12px',
                 color: '#64748b',
                 fontWeight: '600',
-                margin: '2px 0 0 0'
+                margin: '2px 0 0 0',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
               }}>
                 {developerInfo.role}
               </p>
@@ -193,17 +201,19 @@ export default function AboutModal({ isOpen, onClose }) {
           </div>
 
           <p style={{
-            fontSize: '12.5px',
+            fontSize: '12px',
             color: '#475569',
-            lineHeight: '1.5',
-            margin: 0
+            lineHeight: '1.6',
+            margin: 0,
+            textAlign: 'justify',
+            textJustify: 'inter-word'
           }}>
-            Creator of <strong>White Devil's Music</strong> — an offline-first, high-fidelity music streaming application with studio-grade audio tools, multi-user sessions, and zero-storage local sync.
+            Creator of <strong>Music</strong> — an offline-first, high-fidelity music streaming application with studio-grade audio tools, multi-user sessions, and zero-storage local sync.
           </p>
         </div>
 
         {/* Contact Information Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <p style={{
             fontSize: '11px',
             fontWeight: '800',
@@ -220,16 +230,16 @@ export default function AboutModal({ isOpen, onClose }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '10px 14px',
+            padding: '8px 12px',
             backgroundColor: '#f8fafc',
-            borderRadius: '14px',
+            borderRadius: '12px',
             border: '1px solid #e2e8f0'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
               <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
+                width: '28px',
+                height: '28px',
+                borderRadius: '7px',
                 backgroundColor: '#eff6ff',
                 color: '#3b82f6',
                 display: 'flex',
@@ -237,18 +247,18 @@ export default function AboutModal({ isOpen, onClose }) {
                 justifyContent: 'center',
                 flexShrink: 0
               }}>
-                <Mail size={16} />
+                <Mail size={14} />
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700', margin: 0, textTransform: 'uppercase' }}>
+                <p style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', margin: 0, textTransform: 'uppercase' }}>
                   Email Address
                 </p>
                 <a
                   href={`mailto:${developerInfo.email}`}
                   title="Send Email"
                   style={{
-                    fontSize: '13px',
-                    fontWeight: '700',
+                    fontSize: '11.5px',
+                    fontWeight: '600',
                     color: '#0f172a',
                     textDecoration: 'none',
                     margin: 0,
@@ -270,26 +280,26 @@ export default function AboutModal({ isOpen, onClose }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '6px 10px',
-                borderRadius: '8px',
+                padding: '5px 8px',
+                borderRadius: '7px',
                 border: '1px solid #cbd5e1',
                 backgroundColor: '#ffffff',
                 color: copiedField === 'email' ? '#10b981' : '#475569',
-                fontSize: '11.5px',
+                fontSize: '11px',
                 fontWeight: '700',
                 cursor: 'pointer',
                 flexShrink: 0,
-                marginLeft: '8px',
+                marginLeft: '6px',
                 transition: 'all 0.15s ease'
               }}
             >
               {copiedField === 'email' ? (
                 <>
-                  <Check size={13} color="#10b981" /> Copied
+                  <Check size={12} color="#10b981" /> Copied
                 </>
               ) : (
                 <>
-                  <Copy size={13} /> Copy
+                  <Copy size={12} /> Copy
                 </>
               )}
             </button>
@@ -300,16 +310,16 @@ export default function AboutModal({ isOpen, onClose }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '10px 14px',
+            padding: '8px 12px',
             backgroundColor: '#f8fafc',
-            borderRadius: '14px',
+            borderRadius: '12px',
             border: '1px solid #e2e8f0'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
               <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
+                width: '28px',
+                height: '28px',
+                borderRadius: '7px',
                 backgroundColor: '#f0fdf4',
                 color: '#10b981',
                 display: 'flex',
@@ -317,22 +327,25 @@ export default function AboutModal({ isOpen, onClose }) {
                 justifyContent: 'center',
                 flexShrink: 0
               }}>
-                <Phone size={16} />
+                <Phone size={14} />
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700', margin: 0, textTransform: 'uppercase' }}>
+                <p style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', margin: 0, textTransform: 'uppercase' }}>
                   Phone / Mobile
                 </p>
                 <a
                   href={`tel:${developerInfo.phone.replace(/\s+/g, '')}`}
                   title="Call Developer"
                   style={{
-                    fontSize: '13px',
-                    fontWeight: '700',
+                    fontSize: '11.5px',
+                    fontWeight: '600',
                     color: '#0f172a',
                     textDecoration: 'none',
                     margin: 0,
-                    display: 'block'
+                    display: 'block',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
                   }}
                 >
                   {developerInfo.phone}
@@ -347,26 +360,26 @@ export default function AboutModal({ isOpen, onClose }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '6px 10px',
-                borderRadius: '8px',
+                padding: '5px 8px',
+                borderRadius: '7px',
                 border: '1px solid #cbd5e1',
                 backgroundColor: '#ffffff',
                 color: copiedField === 'phone' ? '#10b981' : '#475569',
-                fontSize: '11.5px',
+                fontSize: '11px',
                 fontWeight: '700',
                 cursor: 'pointer',
                 flexShrink: 0,
-                marginLeft: '8px',
+                marginLeft: '6px',
                 transition: 'all 0.15s ease'
               }}
             >
               {copiedField === 'phone' ? (
                 <>
-                  <Check size={13} color="#10b981" /> Copied
+                  <Check size={12} color="#10b981" /> Copied
                 </>
               ) : (
                 <>
-                  <Copy size={13} /> Copy
+                  <Copy size={12} /> Copy
                 </>
               )}
             </button>

@@ -90,9 +90,9 @@ export default function Sidebar({
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
           <h1 style={{
-            fontSize: '12.5px',
+            fontSize: '13px',
             fontWeight: '800',
-            letterSpacing: '0.04em',
+            letterSpacing: '0.06em',
             textTransform: 'uppercase',
             color: 'var(--accent-red, #cc3344)',
             margin: 0,
@@ -100,7 +100,7 @@ export default function Sidebar({
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}>
-            WHITE DEVIL'S MUSIC
+            MUSIC
           </h1>
           <p style={{
             fontSize: '11px',
