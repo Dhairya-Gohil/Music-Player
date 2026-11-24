@@ -172,6 +172,15 @@ function streamAudioFile(filePath, req, res) {
   }
 }
 
+// GET / - Root API status
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'music-backend',
+    version: '2.0.0'
+  });
+});
+
 // GET /api/health
 app.get('/api/health', (req, res) => {
   res.json({ 

@@ -1,7 +1,9 @@
 {
   "services": {
     "client": {
-      "root": "client"
+      "root": "client",
+      "framework": "vite",
+      "outputDirectory": "dist"
     },
     "server": {
       "root": "server",
