@@ -1964,8 +1964,7 @@ export default function App() {
         <div style={{
       width: '100%',
       minHeight: '100vh',
-      backgroundColor: '#f1f5f9',
-      backgroundImage: 'radial-gradient(at 0% 0%, rgba(224, 36, 106, 0.04) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(204, 51, 68, 0.04) 0px, transparent 50%)',
+      backgroundColor: '#ffffff',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'stretch'

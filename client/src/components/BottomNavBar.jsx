@@ -17,14 +17,15 @@ export default function BottomNavBar({ activeTab, onSelectTab }) {
       transform: 'translateX(-50%)',
       width: '100%',
       maxWidth: '480px',
-      height: '74px',
+      height: 'calc(70px + env(safe-area-inset-bottom, 0px))',
+      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       backgroundColor: '#ffffff',
       borderTop: '1px solid rgba(0, 0, 0, 0.05)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-around',
       zIndex: 40,
-      boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.02)'
+      boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.02)'
     }}>
       {tabs.map(tab => {
         const isActive = activeTab === tab.id;
@@ -44,13 +45,13 @@ export default function BottomNavBar({ activeTab, onSelectTab }) {
               padding: '4px 12px'
             }}
           >
-            {/* Image icon with active background */}
+            {/* Image icon with matching subtle active background */}
             <div style={{
               backgroundColor: isActive
-                ? 'var(--bg-pink-card)'
+                ? '#f1f5f9'
                 : 'transparent',
-              padding: '6px 18px',
-              borderRadius: '20px',
+              padding: '6px 16px',
+              borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

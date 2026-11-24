@@ -1,12 +1,12 @@
 {
-  "name": "White Devil's Music",
+  "name": "Music",
   "short_name": "Music",
   "description": "Private Multi-User Music Player & Local Audio Hub",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#cc3344",
+  "theme_color": "#ffffff",
   "orientation": "portrait",
   "icons": [
     {
