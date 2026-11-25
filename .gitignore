@@ -6,4 +6,12 @@ server/uploads/*
 !server/uploads/.gitkeep
 server/users.json
 server/data.json
+.env
+.env.local
+.env.*.local
+firebase-service-account.json
+server/firebase-service-account.json
+*-firebase-adminsdk-*.json
+server/*-firebase-adminsdk-*.json
+
 

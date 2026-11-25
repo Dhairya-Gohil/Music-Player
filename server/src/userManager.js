@@ -3,13 +3,13 @@ const path = require('path');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { isFirebaseConfigured, getDb } = require('./firebase');
 
 const USERS_FILE = path.join(__dirname, '..', 'users.json');
 const DATA_FILE = path.join(__dirname, '..', 'data.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'soundwave-private-secret-key-2026';
 const JWT_EXPIRES_IN = '30d';
 
-// Email validation helper
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function isValidEmail(email) {
@@ -17,12 +17,10 @@ function isValidEmail(email) {
   return EMAIL_REGEX.test(email.trim());
 }
 
-// Default starter playlists for newly registered users (clean empty list - only user created playlists)
-function getDefaultUserPlaylists(username) {
+function getDefaultUserPlaylists() {
   return [];
 }
 
-// Default starter todos for newly registered users
 function getDefaultUserTodos() {
   return [
     { id: `todo-${Date.now()}-1`, text: "Explore local tracks and create playlists", completed: false },
@@ -30,7 +28,9 @@ function getDefaultUserTodos() {
   ];
 }
 
-// Load all users from disk
+// ---------------------------------------------------------------------------
+// JSON FALLBACK HELPERS (Used only when Firebase credentials are not set)
+// ---------------------------------------------------------------------------
 function loadUsers() {
   try {
     if (fs.existsSync(USERS_FILE)) {
@@ -42,7 +42,6 @@ function loadUsers() {
     console.error("Error reading users.json:", err.message);
   }
 
-  // If users.json doesn't exist, create initial seed and migrate any existing data.json
   const initialUsers = [];
   try {
     let existingPlaylists = [];
@@ -69,7 +68,7 @@ function loadUsers() {
       name: 'Music Listener',
       createdAt: new Date().toISOString(),
       likedTrackIds: [],
-      playlists: existingPlaylists.length > 0 ? existingPlaylists : getDefaultUserPlaylists('user'),
+      playlists: existingPlaylists.length > 0 ? existingPlaylists : getDefaultUserPlaylists(),
       todos: existingTodos.length > 0 ? existingTodos : getDefaultUserTodos(),
       trackOverrides: existingOverrides
     };
@@ -83,7 +82,6 @@ function loadUsers() {
   return initialUsers;
 }
 
-// Save all users to disk safely
 function saveUsers(users) {
   try {
     const tempFile = `${USERS_FILE}.tmp`;
@@ -99,31 +97,45 @@ function saveUsers(users) {
   }
 }
 
-// Find user by ID
-function findUserById(id) {
+// ---------------------------------------------------------------------------
+// PUBLIC USER OPERATIONS (Async - Firestore primary, JSON fallback)
+// ---------------------------------------------------------------------------
+async function findUserById(id) {
   if (!id) return null;
+  const db = getDb();
+  if (db) {
+    const doc = await db.collection('users').doc(String(id)).get();
+    return doc.exists ? doc.data() : null;
+  }
   const users = loadUsers();
   return users.find(u => u.id === id) || null;
 }
 
-// Find user by username
-function findUserByUsername(username) {
+async function findUserByUsername(username) {
   if (!username) return null;
   const clean = username.trim().toLowerCase();
+  const db = getDb();
+  if (db) {
+    const snap = await db.collection('users').where('username', '==', clean).limit(1).get();
+    return snap.empty ? null : snap.docs[0].data();
+  }
   const users = loadUsers();
   return users.find(u => u.username && u.username.toLowerCase() === clean) || null;
 }
 
-// Find user by email
-function findUserByEmail(email) {
+async function findUserByEmail(email) {
   if (!email) return null;
   const clean = email.trim().toLowerCase();
+  const db = getDb();
+  if (db) {
+    const snap = await db.collection('users').where('email', '==', clean).limit(1).get();
+    return snap.empty ? null : snap.docs[0].data();
+  }
   const users = loadUsers();
   return users.find(u => u.email && u.email.toLowerCase() === clean) || null;
 }
 
-// Create new user (Sign In / Register)
-function createUser({ username, email, password, name }) {
+async function createUser({ username, email, password, name }) {
   if (!username || !username.trim()) {
     throw new Error('Username is required.');
   }
@@ -143,16 +155,6 @@ function createUser({ username, email, password, name }) {
     throw new Error('Password must be at least 6 characters long.');
   }
 
-  const users = loadUsers();
-
-  if (users.some(u => u.email && u.email.toLowerCase() === cleanEmail)) {
-    throw new Error('An account with this email address is already registered. Please log in.');
-  }
-
-  if (users.some(u => u.username && u.username.toLowerCase() === cleanUsername)) {
-    throw new Error('This username is already taken. Please choose another username.');
-  }
-
   const salt = bcrypt.genSaltSync(10);
   const passwordHash = bcrypt.hashSync(password, salt);
 
@@ -164,21 +166,44 @@ function createUser({ username, email, password, name }) {
     name: (name && name.trim()) || username.trim(),
     createdAt: new Date().toISOString(),
     likedTrackIds: [],
-    playlists: getDefaultUserPlaylists(cleanUsername),
+    playlists: getDefaultUserPlaylists(),
     todos: getDefaultUserTodos(),
     trackOverrides: {},
     resetToken: null,
     resetExpires: null
   };
 
+  const db = getDb();
+  if (db) {
+    const existingEmail = await findUserByEmail(cleanEmail);
+    if (existingEmail) {
+      throw new Error('An account with this email address is already registered. Please log in.');
+    }
+
+    const existingUsername = await findUserByUsername(cleanUsername);
+    if (existingUsername) {
+      throw new Error('This username is already taken. Please choose another username.');
+    }
+
+    await db.collection('users').doc(newUser.id).set(newUser);
+    return sanitizeUser(newUser);
+  }
+
+  // JSON fallback
+  const users = loadUsers();
+  if (users.some(u => u.email && u.email.toLowerCase() === cleanEmail)) {
+    throw new Error('An account with this email address is already registered. Please log in.');
+  }
+  if (users.some(u => u.username && u.username.toLowerCase() === cleanUsername)) {
+    throw new Error('This username is already taken. Please choose another username.');
+  }
+
   users.push(newUser);
   saveUsers(users);
-
   return sanitizeUser(newUser);
 }
 
-// Authenticate user by Email (or username fallback) and Password (Log In)
-function authenticateUser(identifier, password) {
+async function authenticateUser(identifier, password) {
   if (!identifier || !identifier.trim()) {
     throw new Error('Email is required.');
   }
@@ -187,12 +212,15 @@ function authenticateUser(identifier, password) {
   }
 
   const cleanId = identifier.trim().toLowerCase();
-  const users = loadUsers();
+  const db = getDb();
 
-  // Find by email first, then fallback to username
-  let user = users.find(u => u.email && u.email.toLowerCase() === cleanId);
-  if (!user) {
-    user = users.find(u => u.username && u.username.toLowerCase() === cleanId);
+  let user = null;
+  if (db) {
+    user = (await findUserByEmail(cleanId)) || (await findUserByUsername(cleanId));
+  } else {
+    const users = loadUsers();
+    user = users.find(u => u.email && u.email.toLowerCase() === cleanId) ||
+           users.find(u => u.username && u.username.toLowerCase() === cleanId);
   }
 
   if (!user) {
@@ -207,26 +235,35 @@ function authenticateUser(identifier, password) {
   return sanitizeUser(user);
 }
 
-// Generate password reset token
-function createPasswordResetToken(email) {
+async function createPasswordResetToken(email) {
   if (!email || !isValidEmail(email)) {
     throw new Error('Please enter a valid registered email address.');
   }
 
   const cleanEmail = email.trim().toLowerCase();
-  const users = loadUsers();
-  const user = users.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+  const resetToken = crypto.randomBytes(4).toString('hex').toUpperCase();
+  const resetExpires = Date.now() + 3600000;
 
-  if (!user) {
-    throw new Error('No account exists with this email address.');
+  const db = getDb();
+  if (db) {
+    const user = await findUserByEmail(cleanEmail);
+    if (!user) {
+      throw new Error('No account exists with this email address.');
+    }
+    await db.collection('users').doc(user.id).update({
+      resetToken,
+      resetExpires
+    });
+  } else {
+    const users = loadUsers();
+    const user = users.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+    if (!user) {
+      throw new Error('No account exists with this email address.');
+    }
+    user.resetToken = resetToken;
+    user.resetExpires = resetExpires;
+    saveUsers(users);
   }
-
-  // 6-character random alphanumeric reset token
-  const resetToken = crypto.randomBytes(4).toString('hex').toUpperCase(); // e.g. "A3F8B2C1"
-  user.resetToken = resetToken;
-  user.resetExpires = Date.now() + 3600000; // 1 hour expiration
-
-  saveUsers(users);
 
   console.log(`[AUTH] Password reset requested for ${cleanEmail}. Verification Code: ${resetToken}`);
 
@@ -238,39 +275,52 @@ function createPasswordResetToken(email) {
   };
 }
 
-// Reset password with verification token
-function resetPasswordWithToken(token, newPassword) {
+async function resetPasswordWithToken(token, newPassword) {
   if (!token || !token.trim()) {
     throw new Error('Reset code is required.');
   }
-
   if (!newPassword || newPassword.length < 6) {
     throw new Error('New password must be at least 6 characters long.');
   }
 
   const cleanToken = token.trim().toUpperCase();
+  const salt = bcrypt.genSaltSync(10);
+  const passwordHash = bcrypt.hashSync(newPassword, salt);
+
+  const db = getDb();
+  if (db) {
+    const snap = await db.collection('users').where('resetToken', '==', cleanToken).limit(1).get();
+    if (snap.empty) {
+      throw new Error('Invalid reset code. Please check your code or request a new one.');
+    }
+    const userDoc = snap.docs[0];
+    const user = userDoc.data();
+    if (!user.resetExpires || user.resetExpires < Date.now()) {
+      throw new Error('This reset code has expired. Please request a new password reset link.');
+    }
+    await userDoc.ref.update({
+      passwordHash,
+      resetToken: null,
+      resetExpires: null
+    });
+    return sanitizeUser({ ...user, passwordHash, resetToken: null, resetExpires: null });
+  }
+
   const users = loadUsers();
   const user = users.find(u => u.resetToken && u.resetToken.toUpperCase() === cleanToken);
-
   if (!user) {
     throw new Error('Invalid reset code. Please check your code or request a new one.');
   }
-
   if (!user.resetExpires || user.resetExpires < Date.now()) {
     throw new Error('This reset code has expired. Please request a new password reset link.');
   }
-
-  const salt = bcrypt.genSaltSync(10);
-  user.passwordHash = bcrypt.hashSync(newPassword, salt);
+  user.passwordHash = passwordHash;
   user.resetToken = null;
   user.resetExpires = null;
-
   saveUsers(users);
-
   return sanitizeUser(user);
 }
 
-// Sanitize user object (exclude sensitive passwordHash & reset token)
 function sanitizeUser(user) {
   if (!user) return null;
   return {
@@ -284,7 +334,6 @@ function sanitizeUser(user) {
   };
 }
 
-// Sign JWT token for user
 function generateToken(user) {
   return jwt.sign(
     {
@@ -298,7 +347,6 @@ function generateToken(user) {
   );
 }
 
-// Verify JWT token
 function verifyToken(token) {
   try {
     return jwt.verify(token, JWT_SECRET);
@@ -307,8 +355,21 @@ function verifyToken(token) {
   }
 }
 
-// Update specific user record safely
-function updateUser(userId, mutatorFn) {
+async function updateUser(userId, mutatorFn) {
+  const db = getDb();
+  if (db) {
+    const docRef = db.collection('users').doc(String(userId));
+    const doc = await docRef.get();
+    if (!doc.exists) return null;
+
+    const user = doc.data();
+    mutatorFn(user);
+
+    await docRef.set(user, { merge: true });
+    return user;
+  }
+
+  // JSON fallback
   const users = loadUsers();
   const idx = users.findIndex(u => u.id === userId);
   if (idx === -1) return null;
@@ -322,6 +383,7 @@ function updateUser(userId, mutatorFn) {
 module.exports = {
   JWT_SECRET,
   isValidEmail,
+  isFirebaseConfigured,
   loadUsers,
   saveUsers,
   findUserById,

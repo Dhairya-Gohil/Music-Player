@@ -281,10 +281,10 @@ function mergeUserTracks(localTracks, user, globalOverrides = {}) {
 // ---------------------------------------------------------------------------
 
 // POST /api/auth/register - Register new user account (Username, Email, Password, Name)
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, email, password, name } = req.body;
-    const user = createUser({ username, email, password, name });
+    const user = await createUser({ username, email, password, name });
     const token = generateToken(user);
     res.status(201).json({
       success: true,
@@ -297,11 +297,11 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 // POST /api/auth/login - Log in with Email and Password
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, username, password } = req.body;
     const identifier = email || username;
-    const user = authenticateUser(identifier, password);
+    const user = await authenticateUser(identifier, password);
     const token = generateToken(user);
     res.json({
       success: true,
@@ -322,10 +322,10 @@ app.get('/api/auth/me', authenticate, (req, res) => {
 });
 
 // POST /api/auth/forgot-password - Request password reset code
-app.post('/api/auth/forgot-password', (req, res) => {
+app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    const result = createPasswordResetToken(email);
+    const result = await createPasswordResetToken(email);
     res.json({
       success: true,
       message: `Password reset verification code has been sent to ${result.email}.`,
@@ -338,10 +338,10 @@ app.post('/api/auth/forgot-password', (req, res) => {
 });
 
 // POST /api/auth/reset-password - Reset password using verification code
-app.post('/api/auth/reset-password', (req, res) => {
+app.post('/api/auth/reset-password', async (req, res) => {
   try {
     const { token, newPassword } = req.body;
-    const user = resetPasswordWithToken(token, newPassword);
+    const user = await resetPasswordWithToken(token, newPassword);
     const jwtToken = generateToken(user);
     res.json({
       success: true,
@@ -531,11 +531,11 @@ app.post('/api/tracks/batch-upload', uploadToSongs.array('audioFiles', 100), opt
 });
 
 // POST /api/tracks/like/:id - Private Toggle track like (Strictly scoped to logged in user)
-app.post('/api/tracks/like/:id', authenticate, (req, res) => {
+app.post('/api/tracks/like/:id', authenticate, async (req, res) => {
   const trackId = req.params.id;
   let isNowLiked = false;
 
-  updateUser(req.user.id, (user) => {
+  await updateUser(req.user.id, (user) => {
     if (!Array.isArray(user.likedTrackIds)) {
       user.likedTrackIds = [];
     }
@@ -554,7 +554,7 @@ app.post('/api/tracks/like/:id', authenticate, (req, res) => {
 });
 
 // PUT /api/tracks/:id - Private track metadata edit (Strictly scoped to logged in user)
-app.put('/api/tracks/:id', authenticate, (req, res) => {
+app.put('/api/tracks/:id', authenticate, async (req, res) => {
   const { title, artist, album, coverUrl, genre, relPath, originalTitle } = req.body;
   const overrideRecord = {
     id: req.params.id,
@@ -570,7 +570,7 @@ app.put('/api/tracks/:id', authenticate, (req, res) => {
   };
 
   let userOverrides = {};
-  updateUser(req.user.id, (user) => {
+  await updateUser(req.user.id, (user) => {
     if (!user.trackOverrides) user.trackOverrides = {};
 
     user.trackOverrides[req.params.id] = {
@@ -603,16 +603,16 @@ app.put('/api/tracks/:id', authenticate, (req, res) => {
 // ---------------------------------------------------------------------------
 
 // GET /api/todos - Get current user's to-dos
-app.get('/api/todos', optionalAuth, (req, res) => {
+app.get('/api/todos', optionalAuth, async (req, res) => {
   if (!req.user) {
     return res.json({ success: true, todos: [] });
   }
-  const user = findUserById(req.user.id);
+  const user = await findUserById(req.user.id);
   res.json({ success: true, todos: (user && user.todos) ? user.todos : [] });
 });
 
 // POST /api/todos - Add new to-do item for current user
-app.post('/api/todos', authenticate, (req, res) => {
+app.post('/api/todos', authenticate, async (req, res) => {
   const { text } = req.body;
   if (!text) {
     return res.status(400).json({ success: false, message: 'Text is required' });
@@ -625,7 +625,7 @@ app.post('/api/todos', authenticate, (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  updateUser(req.user.id, (user) => {
+  await updateUser(req.user.id, (user) => {
     if (!Array.isArray(user.todos)) user.todos = [];
     user.todos.unshift(newTodo);
   });
@@ -634,9 +634,9 @@ app.post('/api/todos', authenticate, (req, res) => {
 });
 
 // PATCH /api/todos/:id - Toggle to-do status for current user
-app.patch('/api/todos/:id', authenticate, (req, res) => {
+app.patch('/api/todos/:id', authenticate, async (req, res) => {
   let updatedTodo = null;
-  updateUser(req.user.id, (user) => {
+  await updateUser(req.user.id, (user) => {
     if (!Array.isArray(user.todos)) user.todos = [];
     const todo = user.todos.find(t => t.id === req.params.id);
     if (todo) {
@@ -657,8 +657,8 @@ app.patch('/api/todos/:id', authenticate, (req, res) => {
 });
 
 // DELETE /api/todos/:id - Delete to-do from current user's list
-app.delete('/api/todos/:id', authenticate, (req, res) => {
-  updateUser(req.user.id, (user) => {
+app.delete('/api/todos/:id', authenticate, async (req, res) => {
+  await updateUser(req.user.id, (user) => {
     if (Array.isArray(user.todos)) {
       user.todos = user.todos.filter(t => t.id !== req.params.id);
     }
@@ -672,16 +672,16 @@ app.delete('/api/todos/:id', authenticate, (req, res) => {
 // ---------------------------------------------------------------------------
 
 // GET /api/playlists - Get current user's playlists
-app.get('/api/playlists', optionalAuth, (req, res) => {
+app.get('/api/playlists', optionalAuth, async (req, res) => {
   if (!req.user) {
     return res.json({ success: true, playlists: [] });
   }
-  const user = findUserById(req.user.id);
+  const user = await findUserById(req.user.id);
   res.json({ success: true, playlists: (user && user.playlists) ? user.playlists : [] });
 });
 
 // POST /api/playlists - Create new playlist for current user
-app.post('/api/playlists', authenticate, (req, res) => {
+app.post('/api/playlists', authenticate, async (req, res) => {
   const { name, description, coverUrl, id, trackIds } = req.body;
   if (!name) {
     return res.status(400).json({ success: false, message: 'Playlist name is required' });
@@ -695,7 +695,7 @@ app.post('/api/playlists', authenticate, (req, res) => {
     trackIds: Array.isArray(trackIds) ? trackIds : []
   };
 
-  updateUser(req.user.id, (user) => {
+  await updateUser(req.user.id, (user) => {
     if (!Array.isArray(user.playlists)) user.playlists = [];
     const existingIdx = user.playlists.findIndex(p => p.id === newPlaylist.id);
     if (existingIdx !== -1) {
@@ -709,9 +709,9 @@ app.post('/api/playlists', authenticate, (req, res) => {
 });
 
 // PUT /api/playlists/:id - Edit playlist for current user
-app.put('/api/playlists/:id', authenticate, (req, res) => {
+app.put('/api/playlists/:id', authenticate, async (req, res) => {
   let updatedPlaylist = null;
-  updateUser(req.user.id, (user) => {
+  await updateUser(req.user.id, (user) => {
     if (!Array.isArray(user.playlists)) user.playlists = [];
     const playlist = user.playlists.find(p => p.id === req.params.id);
     if (playlist) {
@@ -731,8 +731,8 @@ app.put('/api/playlists/:id', authenticate, (req, res) => {
 });
 
 // DELETE /api/playlists/:id - Delete playlist for current user
-app.delete('/api/playlists/:id', authenticate, (req, res) => {
-  updateUser(req.user.id, (user) => {
+app.delete('/api/playlists/:id', authenticate, async (req, res) => {
+  await updateUser(req.user.id, (user) => {
     if (Array.isArray(user.playlists)) {
       user.playlists = user.playlists.filter(p => p.id !== req.params.id);
     }
@@ -742,11 +742,11 @@ app.delete('/api/playlists/:id', authenticate, (req, res) => {
 });
 
 // POST /api/playlists/:id/add - Add track to current user's playlist
-app.post('/api/playlists/:id/add', authenticate, (req, res) => {
+app.post('/api/playlists/:id/add', authenticate, async (req, res) => {
   const { trackId } = req.body;
   let updatedPlaylist = null;
 
-  updateUser(req.user.id, (user) => {
+  await updateUser(req.user.id, (user) => {
     if (!Array.isArray(user.playlists)) user.playlists = [];
     const playlist = user.playlists.find(p => p.id === req.params.id);
     if (playlist) {
@@ -766,10 +766,10 @@ app.post('/api/playlists/:id/add', authenticate, (req, res) => {
 });
 
 // DELETE /api/playlists/:id/remove/:trackId - Remove track from current user's playlist
-app.delete('/api/playlists/:id/remove/:trackId', authenticate, (req, res) => {
+app.delete('/api/playlists/:id/remove/:trackId', authenticate, async (req, res) => {
   let updatedPlaylist = null;
 
-  updateUser(req.user.id, (user) => {
+  await updateUser(req.user.id, (user) => {
     if (!Array.isArray(user.playlists)) user.playlists = [];
     const playlist = user.playlists.find(p => p.id === req.params.id);
     if (playlist) {
